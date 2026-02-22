@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+kerykeion
+numpy
+pillow
+geopy
+timezonefinder
+certifi
