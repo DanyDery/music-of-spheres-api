@@ -1,7 +1,2 @@
 [deploy]
-startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
-
-[deploy.headers]
-Access-Control-Allow-Origin = "*"
-Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-Access-Control-Allow-Headers = "Content-Type"
+startCommand = "sh -c 'uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}'"
