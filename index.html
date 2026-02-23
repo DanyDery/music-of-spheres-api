@@ -562,19 +562,50 @@ function drawLissajous(freqX,freqY,colorX,colorY){
 
 // ── WEB AUDIO ──
 let audioCtx=null,audio=null
-let planetBuffers={},planetSources={},planetActive={}
-function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)()}
-async function loadPlanetBuf(url){const r=await fetch(API_BASE+url),ab=await r.arrayBuffer();return await audioCtx.decodeAudioData(ab)}
+let planetBuffers={},planetSources={},planetGains={},planetActive={}
+let masterGain=null
+
+function initAudio(){
+  if(!audioCtx){
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)()
+    masterGain=audioCtx.createGain()
+    masterGain.gain.value=1.0
+    masterGain.connect(audioCtx.destination)
+  }
+}
+
+function updateMasterGain(){
+  const active=Object.values(planetActive).filter(Boolean).length
+  // Scale down gain as more planets play to prevent clipping
+  const gain = active === 0 ? 1.0 : Math.min(1.0, 1.0 / Math.sqrt(active))
+  if(masterGain) masterGain.gain.setTargetAtTime(gain, audioCtx.currentTime, 0.1)
+}
+
+async function loadPlanetBuf(url){
+  const r=await fetch(API_BASE+url),ab=await r.arrayBuffer()
+  const abCopy=ab.slice(0)
+  return await audioCtx.decodeAudioData(abCopy)
+}
+
 function togglePlanet(planet){
   const btn=document.querySelector(`[data-planet="${planet}"]`)
   if(planetActive[planet]){
     try{planetSources[planet].stop()}catch(e){}
-    delete planetSources[planet];planetActive[planet]=false;btn.classList.remove('active')
+    delete planetSources[planet]
+    planetActive[planet]=false
+    btn.classList.remove('active')
+    updateMasterGain()
   } else {
     if(!planetBuffers[planet])return
-    const src=audioCtx.createBufferSource();src.buffer=planetBuffers[planet];src.loop=true
-    src.connect(audioCtx.destination);src.start()
-    planetSources[planet]=src;planetActive[planet]=true;btn.classList.add('active')
+    const src=audioCtx.createBufferSource()
+    src.buffer=planetBuffers[planet]
+    src.loop=true
+    src.connect(masterGain)
+    src.start()
+    planetSources[planet]=src
+    planetActive[planet]=true
+    btn.classList.add('active')
+    updateMasterGain()
   }
 }
 
@@ -675,12 +706,11 @@ async function generate(){
           }
           if(!r.ok) throw new Error(`HTTP ${r.status}`)
 
-          const ab = await r.arrayBuffer()
+          const ab  = await r.arrayBuffer()
 
           // Декодуємо тільки якщо audioCtx готовий
           if(!audioCtx) initAudio()
-          const abCopy = ab.slice(0)
-          const buf = await audioCtx.decodeAudioData(abCopy)
+          const buf = await audioCtx.decodeAudioData(ab)
           planetBuffers[planet] = buf
 
           // Активуємо кнопку
