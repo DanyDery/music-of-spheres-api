@@ -97,12 +97,15 @@ def _gen_planet(planet: str, d: dict, duration: int, session_dir: Path) -> Path:
     amp     = 0.55
 
     t    = np.linspace(0, duration, int(m.SAMPLE_RATE * duration), endpoint=False)
-    lfo  = 0.65 + 0.35 * np.sin(2 * math.pi * beat_hz * t)
+    # Use slow breath LFO (0.1 Hz = 10s period) for mixer tracks
+    # Original beat_hz can be too fast (Moon = 0.88 Hz) making loop sound choppy
+    slow_hz = min(beat_hz, 0.1)
+    lfo  = 0.65 + 0.35 * np.sin(2 * math.pi * slow_hz * t)
     tone = amp * lfo * m.string_tone(freq,        t, phase)
     q5   = amp * 0.35 * lfo * m.string_tone(freq * 1.500, t, phase)  # perfect fifth
     q4   = amp * 0.25 * lfo * m.string_tone(freq * 1.333, t, phase)  # perfect fourth
     oct_ = amp * 0.15 * lfo * m.string_tone(freq * 2.000, t, phase)  # octave
-    sig  = tone + q5 + q4 + oct_
+    sig  = m.envelope(tone + q5 + q4 + oct_, attack=1.5, release=2.0)
     sig  = m.reverb(sig, decay=0.3, delay_ms=80, num_echoes=4)
     peak = np.max(np.abs(sig))
     if peak > 0: sig = sig / peak * 0.85
@@ -116,6 +119,8 @@ def _gen_planet(planet: str, d: dict, duration: int, session_dir: Path) -> Path:
         wf.setnchannels(2); wf.setsampwidth(2); wf.setframerate(m.SAMPLE_RATE)
         for l, r in zip(left, right):
             wf.writeframes(struct.pack('<hh', int(l * 32767), int(r * 32767)))
+    # Mark file as fully written — checked before serving
+    (session_dir / f"planet_{planet.lower()}.done").touch()
     return fpath
 
 
@@ -265,12 +270,14 @@ def get_planet_audio(session_id: str, planet_name: str):
     Returns 200 + WAV when ready.
     """
     fpath = OUTPUT_DIR / session_id / f"planet_{planet_name}.wav"
-    if not fpath.exists():
+
+    # Check .done marker — guarantees file is fully written and closed
+    fpath_done = OUTPUT_DIR / session_id / f"planet_{planet_name}.done"
+    if not fpath.exists() or not fpath_done.exists():
         return JSONResponse(
             status_code=202,
             content={"status": "generating", "retry_after": 2}
         )
-    # Read into memory — avoids HTTP/2 streaming issues with Railway proxy
     data = fpath.read_bytes()
     return Response(
         content=data,
