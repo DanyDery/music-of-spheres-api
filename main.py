@@ -5,7 +5,7 @@ Architecture:
   POST /generate
     1. Builds natal chart
     2. Starts audio + image generation (awaited — ~20s)
-    3. Starts planet WAV generation IN BACKGROUND (asyncio.create_task)
+    3. Starts planet WAV generation IN BACKGROUND (FastAPI BackgroundTasks)
     4. Returns response immediately with session_id + planet_urls
 
   GET /planet-audio/{session_id}/{planet}
@@ -20,11 +20,10 @@ import ssl, certifi, os, uuid, asyncio
 os.environ['SSL_CERT_FILE']      = certifi.where()
 os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request
-from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from pathlib import Path
 from datetime import date
@@ -137,10 +136,6 @@ def _gen_planet(planet: str, d: dict, duration: int, session_dir: Path) -> Path:
 
 
 async def _gen_planets_background(chart: dict, session_dir: Path):
-    """
-    Generate all 10 planet WAVs in background after /generate returns.
-    Each planet runs in thread pool — all 10 in parallel.
-    """
     loop = asyncio.get_event_loop()
     futures = [
         loop.run_in_executor(executor, _gen_planet, planet, chart[planet], PLANET_DURATION, session_dir)
@@ -148,6 +143,26 @@ async def _gen_planets_background(chart: dict, session_dir: Path):
     ]
     await asyncio.gather(*futures)
     print(f"✅ All planet tracks ready in {session_dir.name}")
+
+def _gen_planets_background_sync(chart: dict, session_dir: Path):
+    """
+    Synchronous wrapper for FastAPI BackgroundTasks.
+    Runs all 10 planet WAVs in parallel using ThreadPoolExecutor directly.
+    """
+    import concurrent.futures
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
+        futures = {
+            pool.submit(_gen_planet, planet, chart[planet], PLANET_DURATION, session_dir): planet
+            for planet in m.PLANET_ORDER if planet in chart
+        }
+        for future in concurrent.futures.as_completed(futures):
+            planet = futures[future]
+            try:
+                future.result()
+                print(f"✅ Planet ready: {planet}")
+            except Exception as e:
+                print(f"❌ Planet failed: {planet} — {e}")
+    print(f"✅ All planets done: {session_dir.name}")
 
 
 # ══════════════════════════════════════════════
@@ -160,7 +175,7 @@ def health():
 
 
 @app.post("/generate")
-async def generate(req: GenerateRequest):
+async def generate(req: GenerateRequest, background_tasks: BackgroundTasks):
     """
     Step 1 — builds chart, generates main WAV + PNG (awaited).
     Step 2 — starts planet WAV generation IN BACKGROUND (not awaited).
@@ -192,8 +207,8 @@ async def generate(req: GenerateRequest):
         loop.run_in_executor(executor, _gen_image, chart, birthdate, session_dir),
     )
 
-    # Start planet generation in background — do NOT await
-    asyncio.create_task(_gen_planets_background(chart, session_dir))
+    # Start planet generation in background via FastAPI BackgroundTasks
+    background_tasks.add_task(_gen_planets_background_sync, chart, session_dir)
 
     return {
         "session_id": session_id,
