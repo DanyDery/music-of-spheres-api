@@ -142,16 +142,11 @@ def _gen_planets_background_sync(chart: dict, session_dir: Path):
         for future in concurrent.futures.as_completed(futures):
             planet = futures[future]
             try:
-                future.result()
-                try:
                 result = future.result()
                 size_kb = result.stat().st_size / 1024
-                # Read WAV header to get duration
                 import wave as wv2
                 with wv2.open(str(result), 'r') as wf:
-                    frames = wf.getnframes()
-                    rate   = wf.getframerate()
-                    dur    = frames / rate
+                    dur = wf.getnframes() / wf.getframerate()
                 print(f"✅ Planet ready: {planet} | {dur:.2f}s | {size_kb:.0f}KB")
             except Exception as e:
                 print(f"❌ Planet failed: {planet} — {e}")
