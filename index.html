@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Music of the Spheres</title>
+<title>Музика Сфер</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --void:#03020a; --deep:#080614; --nebula:#0d0920;
+  --void:#03020a; --deep:#080614;
   --gold:#c8a84b; --gold-dim:#7a6530; --silver:#9ba8c0; --white:#e8e4f0;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -16,65 +16,26 @@ body{background:var(--void);color:var(--white);font-family:'Cormorant Garamond',
 #starfield{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:0.5;}
 .container{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:0 32px;}
 
+/* LANG SWITCHER */
+.lang-switcher{position:fixed;top:20px;right:24px;z-index:100;display:flex;gap:2px;}
+.lang-btn{background:transparent;border:1px solid rgba(200,168,75,0.2);color:var(--silver);font-family:'Courier Prime',monospace;font-size:10px;letter-spacing:2px;padding:6px 12px;cursor:pointer;transition:all 0.3s;}
+.lang-btn.active{border-color:var(--gold-dim);color:var(--gold);}
+.lang-btn:hover{border-color:var(--gold-dim);color:var(--gold);}
+
 /* HEADER */
-header{text-align:center;padding:80px 0 60px;}
+header{text-align:center;padding:60px 0 40px;}
 .header-symbol{font-size:11px;letter-spacing:6px;color:var(--gold-dim);font-family:'Courier Prime',monospace;margin-bottom:24px;opacity:0;animation:fadeUp 1.2s ease forwards 0.3s;}
 h1{font-size:clamp(40px,7vw,72px);font-weight:300;letter-spacing:2px;line-height:1.1;opacity:0;animation:fadeUp 1.2s ease forwards 0.6s;}
 h1 em{font-style:italic;color:var(--gold);}
-.header-sub{margin-top:20px;font-size:15px;color:var(--silver);font-weight:300;letter-spacing:1px;opacity:0;animation:fadeUp 1.2s ease forwards 0.9s;}
-.divider{width:1px;height:60px;background:linear-gradient(to bottom,transparent,var(--gold-dim),transparent);margin:40px auto;opacity:0;animation:fadeUp 1.2s ease forwards 1.1s;}
+.header-sub{margin-top:16px;font-size:15px;color:var(--silver);font-weight:300;letter-spacing:1px;opacity:0;animation:fadeUp 1.2s ease forwards 0.9s;}
 
 /* CARDS */
 .card{background:rgba(13,9,32,0.75);border:1px solid rgba(200,168,75,0.15);border-radius:2px;padding:40px;backdrop-filter:blur(12px);}
-.form-card{opacity:0;animation:fadeUp 1.2s ease forwards 1.3s;margin-bottom:40px;}
-.section{margin:40px 0;}
+.section{margin:32px 0;}
 .label{font-size:10px;letter-spacing:4px;color:var(--gold-dim);font-family:'Courier Prime',monospace;margin-bottom:20px;display:block;}
 
-/* FORM */
-.form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
-.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
-.field{display:flex;flex-direction:column;gap:8px;}
-.field label{font-size:10px;letter-spacing:3px;color:var(--gold-dim);font-family:'Courier Prime',monospace;}
-.field input{background:rgba(255,255,255,0.03);border:1px solid rgba(200,168,75,0.2);border-radius:1px;padding:12px 14px;color:var(--white);font-family:'Cormorant Garamond',serif;font-size:17px;outline:none;transition:all 0.3s;}
-.field input:focus{border-color:rgba(200,168,75,0.5);background:rgba(200,168,75,0.04);}
-.field input::placeholder{color:rgba(155,168,192,0.3);}
-
-/* WARNING */
-.warning{background:rgba(200,168,75,0.05);border:1px solid rgba(200,168,75,0.2);border-radius:1px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;}
-.warning-icon{color:var(--gold);font-size:14px;margin-top:1px;flex-shrink:0;}
-.warning-text{font-size:13px;color:var(--silver);line-height:1.6;font-family:'Courier Prime',monospace;letter-spacing:0.5px;}
-.warning-text strong{color:var(--gold);}
-
-/* BUTTONS */
-.btn{background:transparent;border:1px solid var(--gold-dim);color:var(--gold);font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:5px;padding:16px;cursor:pointer;transition:all 0.4s;position:relative;overflow:hidden;width:100%;}
-.btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(200,168,75,0.08),transparent);transition:left 0.6s;}
-.btn:hover::before{left:100%;}
-.btn:hover{border-color:var(--gold);background:rgba(200,168,75,0.05);box-shadow:0 0 30px rgba(200,168,75,0.1);}
-.btn:disabled{opacity:0.4;cursor:not-allowed;}
-.btn-sm{padding:10px 20px;width:auto;font-size:10px;letter-spacing:3px;}
-.btn-ghost{border-color:rgba(200,168,75,0.2);color:var(--silver);}
-.btn-ghost:hover{border-color:var(--gold-dim);color:var(--gold);}
-
-/* LOADING */
-.loading{display:none;text-align:center;padding:80px 0;}
-.loading.active{display:block;}
-.orb{width:56px;height:56px;border:1px solid rgba(200,168,75,0.3);border-top-color:var(--gold);border-radius:50%;margin:0 auto 24px;animation:spin 2s linear infinite;}
-.loading-text{font-size:12px;letter-spacing:4px;color:var(--silver);font-family:'Courier Prime',monospace;margin-bottom:12px;}
-.loading-hint{font-size:12px;color:rgba(155,168,192,0.4);font-family:'Courier Prime',monospace;letter-spacing:1px;}
-
-/* RESULT */
-.result{display:none;}
-.result.active{display:block;}
-.result-header{text-align:center;padding:60px 0 40px;}
-.result-date{font-size:11px;letter-spacing:5px;color:var(--gold-dim);font-family:'Courier Prime',monospace;margin-bottom:12px;}
-.result-signs{font-size:30px;font-weight:300;letter-spacing:2px;}
-.natal-map{text-align:center;margin:40px 0;}
-.natal-map img{max-width:100%;border:1px solid rgba(200,168,75,0.1);}
-.lissajous-wrap{text-align:center;margin:40px 0;}
-#lissajous{background:var(--deep);border:1px solid rgba(200,168,75,0.1);display:block;margin:0 auto;max-width:100%;}
-
-/* THEORY PANEL */
-.theory-panel{margin:40px 0;}
+/* THEORY */
+.theory-panel{margin:32px 0;opacity:0;animation:fadeUp 1.2s ease forwards 1.1s;}
 .theory-toggle{background:transparent;border:1px solid rgba(200,168,75,0.15);width:100%;padding:16px 20px;color:var(--silver);font-family:'Courier Prime',monospace;font-size:10px;letter-spacing:4px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;transition:all 0.3s;}
 .theory-toggle:hover{border-color:rgba(200,168,75,0.3);color:var(--gold);}
 .theory-toggle .arrow{transition:transform 0.3s;color:var(--gold-dim);}
@@ -87,16 +48,54 @@ h1 em{font-style:italic;color:var(--gold);}
 .theory-section p{font-size:15px;color:var(--silver);line-height:1.8;font-weight:300;}
 .theory-section p em{color:var(--white);font-style:italic;}
 .theory-formula{font-family:'Courier Prime',monospace;font-size:12px;color:var(--gold);background:rgba(200,168,75,0.05);border:1px solid rgba(200,168,75,0.1);padding:12px 16px;margin:12px 0;border-radius:1px;letter-spacing:1px;}
-.intervals{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;}
-.interval{background:rgba(200,168,75,0.05);border:1px solid rgba(200,168,75,0.15);padding:8px 16px;font-family:'Courier Prime',monospace;font-size:11px;color:var(--gold);}
+.intervals{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.interval{background:rgba(200,168,75,0.05);border:1px solid rgba(200,168,75,0.15);padding:8px 14px;font-family:'Courier Prime',monospace;font-size:11px;color:var(--gold);}
 
-/* LISSAJOUS INFO */
+/* FORM */
+.form-card{opacity:0;animation:fadeUp 1.2s ease forwards 1.3s;margin-bottom:32px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.field{display:flex;flex-direction:column;gap:8px;}
+.field label{font-size:10px;letter-spacing:3px;color:var(--gold-dim);font-family:'Courier Prime',monospace;}
+.field input{background:rgba(255,255,255,0.03);border:1px solid rgba(200,168,75,0.2);border-radius:1px;padding:12px 14px;color:var(--white);font-family:'Cormorant Garamond',serif;font-size:17px;outline:none;transition:all 0.3s;}
+.field input:focus{border-color:rgba(200,168,75,0.5);background:rgba(200,168,75,0.04);}
+.field input::placeholder{color:rgba(155,168,192,0.3);}
+.warning{background:rgba(200,168,75,0.05);border:1px solid rgba(200,168,75,0.2);border-radius:1px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;}
+.warning-icon{color:var(--gold);font-size:14px;margin-top:1px;flex-shrink:0;}
+.warning-text{font-size:13px;color:var(--silver);line-height:1.6;font-family:'Courier Prime',monospace;letter-spacing:0.5px;}
+.warning-text strong{color:var(--gold);}
+
+/* BUTTONS */
+.btn{background:transparent;border:1px solid var(--gold-dim);color:var(--gold);font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:5px;padding:16px;cursor:pointer;transition:all 0.4s;position:relative;overflow:hidden;width:100%;}
+.btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(200,168,75,0.08),transparent);transition:left 0.6s;}
+.btn:hover::before{left:100%;}
+.btn:hover{border-color:var(--gold);background:rgba(200,168,75,0.05);box-shadow:0 0 30px rgba(200,168,75,0.1);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-sm{padding:10px 20px;width:auto;font-size:10px;letter-spacing:3px;}
+
+/* LOADING */
+.loading{display:none;text-align:center;padding:80px 0;}
+.loading.active{display:block;}
+.orb{width:56px;height:56px;border:1px solid rgba(200,168,75,0.3);border-top-color:var(--gold);border-radius:50%;margin:0 auto 24px;animation:spin 2s linear infinite;}
+.loading-text{font-size:12px;letter-spacing:4px;color:var(--silver);font-family:'Courier Prime',monospace;margin-bottom:10px;}
+.loading-hint{font-size:11px;color:rgba(155,168,192,0.4);font-family:'Courier Prime',monospace;letter-spacing:1px;}
+
+/* RESULT */
+.result{display:none;}
+.result.active{display:block;}
+.result-header{text-align:center;padding:50px 0 32px;}
+.result-date{font-size:11px;letter-spacing:5px;color:var(--gold-dim);font-family:'Courier Prime',monospace;margin-bottom:12px;}
+.result-signs{font-size:30px;font-weight:300;letter-spacing:2px;}
+.natal-map{text-align:center;margin:32px 0;}
+.natal-map img{max-width:100%;border:1px solid rgba(200,168,75,0.1);}
+.lissajous-wrap{text-align:center;margin:32px 0;}
+#lissajous{background:var(--deep);border:1px solid rgba(200,168,75,0.1);display:block;margin:0 auto;max-width:100%;}
 .lissajous-info{margin-top:16px;padding:20px 24px;background:rgba(13,9,32,0.5);border:1px solid rgba(200,168,75,0.1);text-align:left;}
 .lissajous-info p{font-size:14px;color:var(--silver);line-height:1.7;font-weight:300;}
 .lissajous-info p em{color:var(--white);font-style:italic;}
 
 /* PLAYER */
-.player-section{margin:40px 0;}
+.player-section{margin:32px 0;}
 .player-controls{display:flex;align-items:center;gap:20px;margin-bottom:28px;}
 .btn-play{width:52px;height:52px;border:1px solid var(--gold-dim);border-radius:50%;background:transparent;color:var(--gold);font-size:16px;cursor:pointer;transition:all 0.3s;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 .btn-play:hover{border-color:var(--gold);background:rgba(200,168,75,0.08);box-shadow:0 0 20px rgba(200,168,75,0.15);}
@@ -106,8 +105,13 @@ h1 em{font-style:italic;color:var(--gold);}
 .progress-fill::after{content:'';position:absolute;right:-3px;top:-3px;width:7px;height:7px;border-radius:50%;background:var(--gold);}
 .time-display{font-size:11px;color:var(--silver);font-family:'Courier Prime',monospace;letter-spacing:2px;}
 .mixer-label{font-size:10px;letter-spacing:4px;color:var(--gold-dim);font-family:'Courier Prime',monospace;margin-bottom:16px;}
+.mixer-loading{display:flex;align-items:center;gap:12px;padding:16px 0;}
+.mixer-loading-orb{width:14px;height:14px;border:1px solid rgba(200,168,75,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 1.5s linear infinite;flex-shrink:0;}
+.mixer-loading-text{font-size:10px;color:rgba(155,168,192,0.5);font-family:'Courier Prime',monospace;letter-spacing:2px;}
 .planets-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
-.planet-btn{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:12px 6px;cursor:pointer;transition:all 0.3s;text-align:center;position:relative;overflow:hidden;}
+.planet-btn{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:12px 6px;text-align:center;position:relative;overflow:hidden;transition:all 0.3s;}
+.planet-btn.ready{cursor:pointer;}
+.planet-btn.ready:hover{background:rgba(255,255,255,0.05);}
 .planet-btn.active{background:rgba(255,255,255,0.05);}
 .planet-glow{position:absolute;top:0;left:0;right:0;bottom:0;opacity:0;transition:opacity 0.3s;}
 .planet-btn.active .planet-glow{opacity:1;}
@@ -116,23 +120,22 @@ h1 em{font-style:italic;color:var(--gold);}
 .planet-sign{font-size:9px;color:var(--gold-dim);font-family:'Courier Prime',monospace;position:relative;z-index:1;margin-top:3px;}
 
 /* TABLE */
-.planet-table{margin:40px 0;}
+.planet-table{margin:32px 0;}
 table{width:100%;border-collapse:collapse;font-family:'Courier Prime',monospace;font-size:11px;}
 th{text-align:left;color:var(--gold-dim);letter-spacing:3px;font-size:9px;padding-bottom:14px;border-bottom:1px solid rgba(200,168,75,0.1);}
 td{padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--silver);}
 td:first-child{color:var(--white);}
 
 /* HISTORY */
-.history-section{margin:40px 0;}
-.history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:16px;}
-.history-card{background:rgba(13,9,32,0.6);border:1px solid rgba(200,168,75,0.1);border-radius:2px;padding:16px;cursor:pointer;transition:all 0.3s;}
+.history-section{margin:32px 0;}
+.history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:16px;}
+.history-card{background:rgba(13,9,32,0.6);border:1px solid rgba(200,168,75,0.1);border-radius:2px;padding:14px;cursor:pointer;transition:all 0.3s;}
 .history-card:hover{border-color:rgba(200,168,75,0.3);background:rgba(200,168,75,0.04);}
 .history-date{font-size:14px;color:var(--white);margin-bottom:4px;}
-.history-city{font-size:10px;color:var(--gold-dim);font-family:'Courier Prime',monospace;letter-spacing:2px;margin-bottom:8px;}
+.history-city{font-size:10px;color:var(--gold-dim);font-family:'Courier Prime',monospace;letter-spacing:2px;margin-bottom:6px;}
 .history-signs{font-size:12px;color:var(--silver);}
-.history-empty{font-size:13px;color:rgba(155,168,192,0.3);font-family:'Courier Prime',monospace;letter-spacing:2px;padding:20px 0;}
 
-footer{text-align:center;padding:60px 0 80px;font-size:10px;color:rgba(155,168,192,0.25);letter-spacing:3px;font-family:'Courier Prime',monospace;}
+footer{text-align:center;padding:50px 0 70px;font-size:10px;color:rgba(155,168,192,0.25);letter-spacing:3px;font-family:'Courier Prime',monospace;}
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -148,121 +151,118 @@ footer{text-align:center;padding:60px 0 80px;font-size:10px;color:rgba(155,168,1
 </head>
 <body>
 <canvas id="starfield"></canvas>
+
+<!-- LANG SWITCHER -->
+<div class="lang-switcher">
+  <button class="lang-btn active" onclick="setLang('ua')">UA</button>
+  <button class="lang-btn" onclick="setLang('en')">EN</button>
+</div>
+
 <div class="container">
 
   <!-- HEADER -->
   <header>
     <div class="header-symbol">✦ MUSICA UNIVERSALIS ✦</div>
-    <h1>Music of the<br><em>Spheres</em></h1>
-    <p class="header-sub">Your personal planetary frequency matrix<br>Pythagorean theory · Swiss Ephemeris · 432 Hz tuning</p>
-    <div class="divider"></div>
+    <h1 data-ua="Музика<br><em>Сфер</em>" data-en="Music of the<br><em>Spheres</em>">Музика<br><em>Сфер</em></h1>
+    <p class="header-sub" data-ua="Ваша особиста планетарна матриця частот<br>Теорія Піфагора · Швейцарський Ефемерид · 432 Гц" data-en="Your personal planetary frequency matrix<br>Pythagorean theory · Swiss Ephemeris · 432 Hz tuning">Ваша особиста планетарна матриця частот<br>Теорія Піфагора · Швейцарський Ефемерид · 432 Гц</p>
   </header>
 
+  <!-- THEORY — open by default, above form -->
+  <div class="theory-panel">
+    <button class="theory-toggle open" id="theoryToggle" onclick="toggleTheory()">
+      <span data-ua="ПРО ТЕОРІЮ" data-en="ABOUT THE THEORY">ПРО ТЕОРІЮ</span>
+      <span class="arrow">▾</span>
+    </button>
+    <div class="theory-body open" id="theoryBody">
+
+      <div class="theory-section">
+        <h3 data-ua="ПІФАГОР І ГАРМОНІЯ СФЕР" data-en="PYTHAGORAS & THE HARMONY OF SPHERES">ПІФАГОР І ГАРМОНІЯ СФЕР</h3>
+        <p data-ua="Близько 500 р. до н.е. Піфагор відкрив, що музична гармонія визначається точними математичними пропорціями. Проходячи повз ковальню, він помітив, що молоти різної ваги видають співзвучні інтервали — ті самі пропорції, що він знайшов на струні монохорда. Він дійшов висновку, що Всесвіт організований тими ж числами: планети рухаються по орбітах, пропорції яких створюють вічну <em>musica universalis</em> — музику, надто чисту для людського вуха." data-en="Around 500 BCE, Pythagoras discovered that musical harmony is governed by precise mathematical ratios. Passing a blacksmith's forge, he noticed that hammers of different weights produced harmonious intervals — the same ratios he found on the monochord string. He concluded that the cosmos is organised by the same numbers: the planets move in orbits whose proportions create an eternal <em>musica universalis</em> — a music too pure for human ears.">Близько 500 р. до н.е. Піфагор відкрив, що музична гармонія визначається точними математичними пропорціями. Проходячи повз ковальню, він помітив, що молоти різної ваги видають співзвучні інтервали — ті самі пропорції, що він знайшов на струні монохорда. Він дійшов висновку, що Всесвіт організований тими ж числами: планети рухаються по орбітах, пропорції яких створюють вічну <em>musica universalis</em> — музику, надто чисту для людського вуха.</p>
+      </div>
+
+      <div class="theory-section">
+        <h3 data-ua="ТРИ СВЯЩЕННИХ ІНТЕРВАЛИ" data-en="THREE SACRED INTERVALS">ТРИ СВЯЩЕННИХ ІНТЕРВАЛИ</h3>
+        <p data-ua="Ямвліх записав, що Піфагор виділив три основних консонанси — основу всієї гармонії. Кожна планета у вашій матриці звучить одночасно з усіма трьома:" data-en="Iamblichus records that Pythagoras identified three fundamental consonances. Every planet in your matrix sounds with all three simultaneously:">Ямвліх записав, що Піфагор виділив три основних консонанси — основу всієї гармонії. Кожна планета у вашій матриці звучить одночасно з усіма трьома:</p>
+        <div class="intervals">
+          <div class="interval" data-ua="КВІНТА  3:2  × 1.500" data-en="PERFECT FIFTH  3:2  × 1.500">КВІНТА  3:2  × 1.500</div>
+          <div class="interval" data-ua="КВАРТА  4:3  × 1.333" data-en="PERFECT FOURTH  4:3  × 1.333">КВАРТА  4:3  × 1.333</div>
+          <div class="interval" data-ua="ОКТАВА  2:1  × 2.000" data-en="OCTAVE  2:1  × 2.000">ОКТАВА  2:1  × 2.000</div>
+        </div>
+      </div>
+
+      <div class="theory-section">
+        <h3 data-ua="ГАНС КУSТО І ПЛАНЕТАРНІ ЧАСТОТИ" data-en="HANS COUSTO & PLANETARY FREQUENCIES">ГАНС КУSТО І ПЛАНЕТАРНІ ЧАСТОТИ</h3>
+        <p data-ua="У 1978 році швейцарський математик Ганс Куsто вивів базову частоту кожної планети з її орбітального періоду — підіймаючи його октавами в чутний діапазон. Ваш знак і точний градус зміщують частоту хроматично в піфагорейській 12-тоновій гамі:" data-en="In 1978, Swiss mathematician Hans Cousto derived the base frequency of each planet from its orbital period via octave transposition. Your birth sign and exact degree shift the frequency chromatically within the Pythagorean 12-tone scale:">У 1978 році швейцарський математик Ганс Куsто вивів базову частоту кожної планети з її орбітального періоду — підіймаючи його октавами в чутний діапазон. Ваш знак і точний градус зміщують частоту хроматично в піфагорейській 12-тоновій гамі:</p>
+        <div class="theory-formula">freq = base × 2^(semitone/12) × 2^(degree/29/12) × 432/440</div>
+      </div>
+
+      <div class="theory-section">
+        <h3 data-ua="СТРІЙ 432 ГЦ" data-en="432 HZ NATURAL TUNING">СТРІЙ 432 ГЦ</h3>
+        <p data-ua="Система Куsто побудована на <em>A = 432 Гц</em>, а не на сучасному стандарті 440 Гц, прийнятому у 1939 році. Всі частоти у вашій матриці транспоновані з коефіцієнтом <em>432/440</em> для відновлення природного строю." data-en="Cousto's system is built on <em>A = 432 Hz</em>, not the modern standard of 440 Hz adopted in 1939. All frequencies in your matrix are transposed by a factor of <em>432/440</em> to restore the natural tuning.">Система Куsто побудована на <em>A = 432 Гц</em>, а не на сучасному стандарті 440 Гц, прийнятому у 1939 році. Всі частоти у вашій матриці транспоновані з коефіцієнтом <em>432/440</em> для відновлення природного строю.</p>
+      </div>
+
+      <div class="theory-section">
+        <h3 data-ua="ТЕМБР: МОНОХОРД" data-en="TIMBRE: THE MONOCHORD">ТЕМБР: МОНОХОРД</h3>
+        <p data-ua="Піфагор проводив всі гармонічні досліди на <em>монохорді</em> — одній струні. Ямвліх пише, що він навчав відтворювати космічні звуки 'за допомогою струнних інструментів'. Кожна планета у вашій матриці використовує пилоподібну форму хвилі з 6 гармоніками ряду Фур'є — математичний еквівалент защипнутої струни." data-en="Pythagoras conducted all harmonic experiments on the <em>monochord</em> — a single string. Iamblichus writes that he taught to reproduce cosmic sounds 'using string instruments'. Every planet uses a sawtooth waveform built from 6 Fourier harmonics — the mathematical equivalent of a plucked string.">Піфагор проводив всі гармонічні досліди на <em>монохорді</em> — одній струні. Ямвліх пише, що він навчав відтворювати космічні звуки 'за допомогою струнних інструментів'. Кожна планета у вашій матриці використовує пилоподібну форму хвилі з 6 гармоніками ряду Фур'є — математичний еквівалент защипнутої струни.</p>
+      </div>
+
+    </div>
+  </div>
+
   <!-- HISTORY -->
-  <div class="history-section" id="historySection">
-    <span class="label">PREVIOUSLY GENERATED CHARTS</span>
+  <div class="history-section" id="historySection" style="display:none">
+    <span class="label" id="labelHistory" data-ua="РАНІШЕ ЗГЕНЕРОВАНІ КАРТИ" data-en="PREVIOUSLY GENERATED CHARTS">РАНІШЕ ЗГЕНЕРОВАНІ КАРТИ</span>
     <div class="history-grid" id="historyGrid"></div>
   </div>
 
   <!-- FORM -->
   <div class="card form-card" id="formSection">
-    <span class="label">ENTER BIRTH DATA</span>
+    <span class="label" data-ua="ВВЕДІТЬ ДАНІ НАРОДЖЕННЯ" data-en="ENTER BIRTH DATA">ВВЕДІТЬ ДАНІ НАРОДЖЕННЯ</span>
     <div class="form-grid">
-      <div class="field"><label>YEAR</label><input type="number" id="year" placeholder="1990" min="1900" max="2100"></div>
-      <div class="field"><label>MONTH</label><input type="number" id="month" placeholder="3" min="1" max="12"></div>
-      <div class="field"><label>DAY</label><input type="number" id="day" placeholder="15" min="1" max="31"></div>
+      <div class="field"><label data-ua="РІК" data-en="YEAR">РІК</label><input type="number" id="year" placeholder="1990" min="1900" max="2100"></div>
+      <div class="field"><label data-ua="МІСЯЦЬ" data-en="MONTH">МІСЯЦЬ</label><input type="number" id="month" placeholder="3" min="1" max="12"></div>
+      <div class="field"><label data-ua="ДЕНЬ" data-en="DAY">ДЕНЬ</label><input type="number" id="day" placeholder="15" min="1" max="31"></div>
     </div>
     <div class="form-grid-2">
-      <div class="field"><label>TIME (optional)</label><input type="text" id="time" placeholder="14:30"></div>
-      <div class="field"><label>CITY</label><input type="text" id="city" placeholder="Kyiv"></div>
+      <div class="field"><label data-ua="ЧАС (необов'язково)" data-en="TIME (optional)">ЧАС (необов'язково)</label><input type="text" id="time" placeholder="14:30"></div>
+      <div class="field"><label data-ua="МІСТО" data-en="CITY">МІСТО</label><input type="text" id="city" placeholder="Київ"></div>
     </div>
     <div class="warning">
       <span class="warning-icon">◎</span>
-      <span class="warning-text">
-        <strong>Generation takes 5–10 minutes.</strong> The server calculates your exact planetary positions via Swiss Ephemeris, synthesizes 10 individual audio tracks in 432 Hz tuning, and renders your natal map. Please keep this tab open.
-      </span>
+      <span class="warning-text" id="warningText" data-ua="<strong>Генерація займає до 2 хвилин.</strong> Сервер розраховує точні планетарні позиції, синтезує 10 аудіотреків у строї 432 Гц та рендерить вашу натальну карту. Будь ласка, не закривайте вкладку." data-en="<strong>Generation takes up to 2 minutes.</strong> The server calculates your exact planetary positions, synthesizes 10 audio tracks in 432 Hz tuning, and renders your natal map. Please keep this tab open."><strong>Генерація займає до 2 хвилин.</strong> Сервер розраховує точні планетарні позиції, синтезує 10 аудіотреків у строї 432 Гц та рендерить вашу натальну карту. Будь ласка, не закривайте вкладку.</span>
     </div>
-    <button class="btn" id="btnGenerate" onclick="generate()">GENERATE MY MATRIX</button>
-  </div>
-
-  <!-- THEORY (always visible, collapsed by default) -->
-  <div class="theory-panel">
-    <button class="theory-toggle" id="theoryToggle" onclick="toggleTheory()">
-      <span>ABOUT THE THEORY</span>
-      <span class="arrow">▾</span>
-    </button>
-    <div class="theory-body" id="theoryBody">
-      <div class="theory-section">
-        <h3>PYTHAGORAS & THE HARMONY OF SPHERES</h3>
-        <p>Around 500 BCE, Pythagoras discovered that musical harmony is governed by precise mathematical ratios. Passing a blacksmith's forge, he noticed that hammers of different weights produced harmonious intervals — the same ratios he found on the monochord string. He concluded that the cosmos itself is organised by the same numbers: the planets move in orbits whose proportions create an eternal <em>musica universalis</em> — a music too pure for human ears.</p>
-      </div>
-      <div class="theory-section">
-        <h3>THREE SACRED INTERVALS</h3>
-        <p>Iamblichus records that Pythagoras identified three fundamental consonances, the basis of all harmony. Every planet in your matrix sounds with all three simultaneously:</p>
-        <div class="intervals">
-          <div class="interval">PERFECT FIFTH  3 : 2  × 1.500</div>
-          <div class="interval">PERFECT FOURTH  4 : 3  × 1.333</div>
-          <div class="interval">OCTAVE  2 : 1  × 2.000</div>
-        </div>
-        <p style="margin-top:12px">Nicomachus called the proportion <em>6 : 8 : 9 : 12</em> the "most perfect harmony" — it contains all three intervals at once, and the geometric, arithmetic, and harmonic means simultaneously.</p>
-      </div>
-      <div class="theory-section">
-        <h3>HANS COUSTO & PLANETARY FREQUENCIES</h3>
-        <p>In 1978, Swiss mathematician Hans Cousto derived the base frequency of each planet by taking its orbital period and raising it by octaves into the audible range — the same method Pythagoras used conceptually. Each planet has one precise frequency:</p>
-        <div class="theory-formula">freq = base × 2^(semitone/12) × 2^(degree/29/12)</div>
-        <p>Your birth sign and exact degree shift the frequency chromatically within the Pythagorean 12-tone scale — 12 zodiac signs mapped to 12 semitones.</p>
-      </div>
-      <div class="theory-section">
-        <h3>432 HZ NATURAL TUNING</h3>
-        <p>Cousto's system is built on <em>A = 432 Hz</em>, not the modern standard of 440 Hz adopted in 1939. All frequencies in your matrix are transposed by a factor of <em>432 / 440</em> to restore the natural tuning in which the planetary calculations were originally conceived.</p>
-      </div>
-      <div class="theory-section">
-        <h3>TIMBRE: THE MONOCHORD</h3>
-        <p>Pythagoras conducted all his harmonic experiments on the <em>monochord</em> — a single string. Iamblichus writes that he taught students to reproduce cosmic sounds "using string instruments." Every planet in your matrix uses a sawtooth waveform built from 6 harmonics of the Fourier series — the mathematical equivalent of a plucked string.</p>
-      </div>
-      <div class="theory-section">
-        <h3>RHYTHM FROM THE HEAVENS</h3>
-        <p>Each planet pulses at its own BPM, derived from its orbital period by the same octave method Cousto used for pitch. The Moon — completing its orbit in 27 days — pulses at <em>~53 BPM</em>, close to a resting heartbeat. The Sun breathes at <em>~4 BPM</em>. The outer planets move so slowly their pulse is almost imperceptible — a cosmic undertow.</p>
-      </div>
-      <div class="theory-section">
-        <h3>EARTH DRONE</h3>
-        <p>Robert Fludd's 1617 <em>Celestial Monochord</em> places <em>Terra</em> at the very base of the cosmic instrument. In your matrix, Earth's frequency (194.18 Hz × 432/440) sounds as a continuous drone beneath all the planetary voices — the ground on which the spheres rest.</p>
-      </div>
-    </div>
+    <button class="btn" id="btnGenerate" onclick="generate()" data-ua="ЗГЕНЕРУВАТИ МОЮ МАТРИЦЮ" data-en="GENERATE MY MATRIX">ЗГЕНЕРУВАТИ МОЮ МАТРИЦЮ</button>
   </div>
 
   <!-- LOADING -->
   <div class="loading" id="loading">
     <div class="orb"></div>
-    <div class="loading-text">CALCULATING PLANETARY POSITIONS</div>
-    <div class="loading-hint">This may take up to 10 minutes — please keep this tab open</div>
+    <div class="loading-text" data-ua="РОЗРАХОВУЄМО ПЛАНЕТАРНІ ПОЗИЦІЇ" data-en="CALCULATING PLANETARY POSITIONS">РОЗРАХОВУЄМО ПЛАНЕТАРНІ ПОЗИЦІЇ</div>
+    <div class="loading-hint" data-ua="Це може зайняти до 2 хвилин — не закривайте вкладку" data-en="This may take up to 2 minutes — please keep this tab open">Це може зайняти до 2 хвилин — не закривайте вкладку</div>
   </div>
 
   <!-- RESULT -->
   <div class="result" id="result">
-
     <div class="result-header">
       <div class="result-date" id="resultDate"></div>
       <div class="result-signs" id="resultSigns"></div>
     </div>
 
     <div class="natal-map">
-      <span class="label" style="text-align:center;display:block">NATAL PLANETARY MAP</span>
+      <span class="label" style="text-align:center;display:block" data-ua="НАТАЛЬНА ПЛАНЕТАРНА КАРТА" data-en="NATAL PLANETARY MAP">НАТАЛЬНА ПЛАНЕТАРНА КАРТА</span>
       <img id="natalImage" src="" alt="Natal Map">
     </div>
 
-    <!-- LISSAJOUS + explanation -->
     <div class="lissajous-wrap section">
-      <span class="label" style="text-align:center;display:block">SUN · MOON HARMONIC — LISSAJOUS FIGURE</span>
+      <span class="label" style="text-align:center;display:block" data-ua="ГАРМОНІКА СОНЦЯ · МІСЯЦЯ — ФІГУРА ЛІССАЖУ" data-en="SUN · MOON HARMONIC — LISSAJOUS FIGURE">ГАРМОНІКА СОНЦЯ · МІСЯЦЯ — ФІГУРА ЛІССАЖУ</span>
       <canvas id="lissajous" width="480" height="480"></canvas>
       <div class="lissajous-info">
-        <p>This figure is drawn by plotting your <em>Sun frequency</em> on the horizontal axis and your <em>Moon frequency</em> on the vertical axis simultaneously. When both frequencies are in a simple ratio (like the Pythagorean perfect fifth 3:2), the curve closes into a stable geometric form. Your frequencies are irrational — so the curve <em>never exactly repeats</em>, endlessly tracing a unique pattern that belongs only to your natal chart. The slow rotation of phase is the "breath" of the spheres.</p>
+        <p id="lissajousText" data-ua="Ця фігура будується шляхом відображення вашої <em>частоти Сонця</em> по горизонтальній осі та <em>частоти Місяця</em> по вертикальній одночасно. Коли обидві частоти перебувають у простому співвідношенні (наприклад, піфагорейська квінта 3:2), крива замикається у стабільну геометричну форму. Ваші частоти ірраціональні — тому крива <em>ніколи точно не повторюється</em>, безкінечно відстежуючи унікальний патерн, що належить тільки вашій натальній карті." data-en="This figure is drawn by plotting your <em>Sun frequency</em> on the horizontal axis and your <em>Moon frequency</em> on the vertical axis simultaneously. When both frequencies are in a simple ratio (like the Pythagorean perfect fifth 3:2), the curve closes into a stable geometric form. Your frequencies are irrational — so the curve <em>never exactly repeats</em>, endlessly tracing a unique pattern that belongs only to your natal chart.">Ця фігура будується шляхом відображення вашої <em>частоти Сонця</em> по горизонтальній осі та <em>частоти Місяця</em> по вертикальній одночасно. Коли обидві частоти перебувають у простому співвідношенні (наприклад, піфагорейська квінта 3:2), крива замикається у стабільну геометричну форму. Ваші частоти ірраціональні — тому крива <em>ніколи точно не повторюється</em>, безкінечно відстежуючи унікальний патерн, що належить тільки вашій натальній карті.</p>
       </div>
     </div>
 
-    <!-- PLAYER -->
     <div class="card player-section">
-      <span class="label">YOUR MUSIC OF THE SPHERES</span>
+      <span class="label" data-ua="ВАША МУЗИКА СФЕР" data-en="YOUR MUSIC OF THE SPHERES">ВАША МУЗИКА СФЕР</span>
       <div class="player-controls">
         <button class="btn-play" id="btnPlay" onclick="togglePlay()">▶</button>
         <div class="progress-wrap">
@@ -271,23 +271,35 @@ footer{text-align:center;padding:60px 0 80px;font-size:10px;color:rgba(155,168,1
           </div>
           <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
         </div>
-        <button class="btn btn-sm" id="btnDownload">DOWNLOAD</button>
+        <button class="btn btn-sm" id="btnDownload" data-ua="ЗАВАНТАЖИТИ" data-en="DOWNLOAD">ЗАВАНТАЖИТИ</button>
       </div>
-      <div class="mixer-label">PLANET MIXER — CLICK TO TOGGLE</div>
-      <div class="planets-grid" id="planetsGrid"></div>
+      <div class="mixer-label" data-ua="МІКШЕР ПЛАНЕТ — НАТИСНІТЬ ДЛЯ УВІМКНЕННЯ" data-en="PLANET MIXER — CLICK TO TOGGLE">МІКШЕР ПЛАНЕТ — НАТИСНІТЬ ДЛЯ УВІМКНЕННЯ</div>
+      <div class="mixer-loading" id="mixerLoading">
+        <div class="mixer-loading-orb"></div>
+        <div class="mixer-loading-text" data-ua="ЗАВАНТАЖЕННЯ ПЛАНЕТАРНИХ ТРЕКІВ..." data-en="LOADING PLANET TRACKS...">ЗАВАНТАЖЕННЯ ПЛАНЕТАРНИХ ТРЕКІВ...</div>
+      </div>
+      <div class="planets-grid" id="planetsGrid" style="display:none"></div>
     </div>
 
-    <!-- TABLE -->
     <div class="card planet-table">
-      <span class="label">PYTHAGOREAN FREQUENCY MATRIX</span>
+      <span class="label" data-ua="ПІФАГОРЕЙСЬКА МАТРИЦЯ ЧАСТОТ" data-en="PYTHAGOREAN FREQUENCY MATRIX">ПІФАГОРЕЙСЬКА МАТРИЦЯ ЧАСТОТ</span>
       <table>
-        <thead><tr><th>PLANET</th><th>SIGN</th><th>DEGREE</th><th>FREQUENCY</th><th>RHYTHM</th><th>STRENGTH</th></tr></thead>
+        <thead>
+          <tr>
+            <th data-ua="ПЛАНЕТА" data-en="PLANET">ПЛАНЕТА</th>
+            <th data-ua="ЗНАК" data-en="SIGN">ЗНАК</th>
+            <th data-ua="ГРАДУС" data-en="DEGREE">ГРАДУС</th>
+            <th data-ua="ЧАСТОТА" data-en="FREQUENCY">ЧАСТОТА</th>
+            <th data-ua="РИТМ" data-en="RHYTHM">РИТМ</th>
+            <th data-ua="СИЛА" data-en="STRENGTH">СИЛА</th>
+          </tr>
+        </thead>
         <tbody id="planetTableBody"></tbody>
       </table>
     </div>
 
-    <div style="text-align:center;margin:40px 0 20px">
-      <button class="btn" onclick="resetForm()" style="max-width:280px;margin:0 auto;display:block">NEW CHART</button>
+    <div style="text-align:center;margin:32px 0 20px">
+      <button class="btn" onclick="resetForm()" style="max-width:280px;margin:0 auto;display:block" data-ua="НОВА КАРТА" data-en="NEW CHART">НОВА КАРТА</button>
     </div>
   </div>
 
@@ -295,16 +307,34 @@ footer{text-align:center;padding:60px 0 80px;font-size:10px;color:rgba(155,168,1
 </div>
 
 <script>
-const API_BASE = 'https://music-of-spheres-api-production.up.railway.app'
+const API_BASE = 'https://music-of-spheres-api-production.up.railway.app/'
 const STORAGE_KEY = 'spheres_history'
-const MAX_HISTORY = 10
 const PLANET_ORDER = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto']
 
+// ── LANGUAGE ──
+let currentLang = 'ua'
+
+function setLang(lang) {
+  currentLang = lang
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent===lang.toUpperCase()))
+  document.querySelectorAll('[data-ua]').forEach(el => {
+    const text = el.getAttribute('data-'+lang)
+    if (!text) return
+    if (el.tagName==='INPUT' || el.tagName==='BUTTON') {
+      el.textContent = text
+    } else {
+      el.innerHTML = text
+    }
+  })
+  // Re-render history labels
+  renderHistory()
+}
+
 // ── STARFIELD ──
-const sfC=document.getElementById('starfield'), sfX=sfC.getContext('2d')
+const sfC=document.getElementById('starfield'),sfX=sfC.getContext('2d')
 let stars=[]
 function initStars(){
-  sfC.width=window.innerWidth; sfC.height=window.innerHeight
+  sfC.width=window.innerWidth;sfC.height=window.innerHeight
   stars=Array.from({length:180},()=>({x:Math.random()*sfC.width,y:Math.random()*sfC.height,r:Math.random()*1.2,o:Math.random()*0.5+0.1,s:Math.random()*0.3+0.05}))
 }
 function drawStars(){
@@ -312,127 +342,96 @@ function drawStars(){
   stars.forEach(s=>{sfX.beginPath();sfX.arc(s.x,s.y,s.r,0,Math.PI*2);sfX.fillStyle=`rgba(232,228,240,${s.o+Math.sin(Date.now()*s.s*0.001)*0.08})`;sfX.fill()})
   requestAnimationFrame(drawStars)
 }
-window.addEventListener('resize',initStars); initStars(); drawStars()
+window.addEventListener('resize',initStars);initStars();drawStars()
 
 // ── THEORY TOGGLE ──
 function toggleTheory(){
-  const btn=document.getElementById('theoryToggle')
-  const body=document.getElementById('theoryBody')
-  btn.classList.toggle('open')
-  body.classList.toggle('open')
+  document.getElementById('theoryToggle').classList.toggle('open')
+  document.getElementById('theoryBody').classList.toggle('open')
 }
 
-// ── LOCAL STORAGE HISTORY ──
-function loadHistory(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]') }catch(e){ return [] } }
-function saveHistory(h){ localStorage.setItem(STORAGE_KEY, JSON.stringify(h.slice(0,MAX_HISTORY))) }
-
+// ── HISTORY ──
+function loadHistory(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch(e){return[]}}
+function saveHistory(h){localStorage.setItem(STORAGE_KEY,JSON.stringify(h.slice(0,10)))}
 function addToHistory(entry){
-  const h = loadHistory()
-  // Avoid exact duplicates
-  const key = `${entry.year}-${entry.month}-${entry.day}-${entry.city}`
-  const filtered = h.filter(e=>`${e.year}-${e.month}-${e.day}-${e.city}` !== key)
-  filtered.unshift(entry)
-  saveHistory(filtered)
-  renderHistory()
+  const h=loadHistory()
+  const key=`${entry.year}-${entry.month}-${entry.day}-${entry.city}`
+  const filtered=h.filter(e=>`${e.year}-${e.month}-${e.day}-${e.city}`!==key)
+  filtered.unshift(entry);saveHistory(filtered);renderHistory()
 }
-
 function renderHistory(){
-  const h = loadHistory()
-  const section = document.getElementById('historySection')
-  const grid    = document.getElementById('historyGrid')
-  if (h.length === 0){
-    section.style.display = 'none'
-    return
-  }
-  section.style.display = 'block'
-  grid.innerHTML = ''
-  h.forEach(e => {
-    const card = document.createElement('div')
-    card.className = 'history-card'
-    card.innerHTML = `
-      <div class="history-date">${e.birthdate}</div>
-      <div class="history-city">${e.city.toUpperCase()}</div>
-      <div class="history-signs">☀ ${e.sunSign}  ☽ ${e.moonSign}</div>`
-    card.onclick = () => restoreFromHistory(e)
+  const h=loadHistory()
+  const section=document.getElementById('historySection')
+  const grid=document.getElementById('historyGrid')
+  if(h.length===0){section.style.display='none';return}
+  section.style.display='block'
+  const lbl=document.getElementById('labelHistory')
+  if(lbl) lbl.textContent=currentLang==='ua'?'РАНІШЕ ЗГЕНЕРОВАНІ КАРТИ':'PREVIOUSLY GENERATED CHARTS'
+  grid.innerHTML=''
+  h.forEach(e=>{
+    const card=document.createElement('div');card.className='history-card'
+    card.innerHTML=`<div class="history-date">${e.birthdate}</div><div class="history-city">${e.city.toUpperCase()}</div><div class="history-signs">☀ ${e.sunSign}  ☽ ${e.moonSign}</div>`
+    card.onclick=()=>{
+      document.getElementById('year').value=e.year
+      document.getElementById('month').value=e.month
+      document.getElementById('day').value=e.day
+      document.getElementById('city').value=e.city
+      if(e.hour!==12||e.minute!==0) document.getElementById('time').value=`${e.hour}:${String(e.minute).padStart(2,'0')}`
+      document.getElementById('formSection').scrollIntoView({behavior:'smooth'})
+    }
     grid.appendChild(card)
   })
-}
-
-function restoreFromHistory(e){
-  // Pre-fill form
-  document.getElementById('year').value  = e.year
-  document.getElementById('month').value = e.month
-  document.getElementById('day').value   = e.day
-  document.getElementById('city').value  = e.city
-  if (e.hour !== 12 || e.minute !== 0)
-    document.getElementById('time').value = `${e.hour}:${String(e.minute).padStart(2,'0')}`
-  // Scroll to form
-  document.getElementById('formSection').scrollIntoView({behavior:'smooth'})
 }
 
 // ── LISSAJOUS ──
 let lisAnim=null
 function drawLissajous(freqX,freqY,colorX,colorY){
-  const cv=document.getElementById('lissajous'), ctx=cv.getContext('2d')
-  const W=cv.width, H=cv.height, cx=W/2, cy=H/2, R=W*0.42
-  const ratio=freqX/freqY
-  let t=0, phase=0
-  if(lisAnim) cancelAnimationFrame(lisAnim)
-  ctx.fillStyle='#080614'; ctx.fillRect(0,0,W,H)
+  const cv=document.getElementById('lissajous'),ctx=cv.getContext('2d')
+  const W=cv.width,H=cv.height,cx=W/2,cy=H/2,R=W*0.42
+  const ratio=freqX/freqY;let t=0,phase=0
+  if(lisAnim)cancelAnimationFrame(lisAnim)
+  ctx.fillStyle='#080614';ctx.fillRect(0,0,W,H)
   function frame(){
-    ctx.fillStyle='rgba(8,6,20,0.04)'; ctx.fillRect(0,0,W,H)
+    ctx.fillStyle='rgba(8,6,20,0.04)';ctx.fillRect(0,0,W,H)
     ctx.beginPath()
-    for(let i=0;i<=800;i++){
-      const tt=(i/800)*Math.PI*2*8
-      const x=cx+R*Math.sin(ratio*tt+phase), y=cy+R*Math.sin(tt)
-      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)
-    }
+    for(let i=0;i<=800;i++){const tt=(i/800)*Math.PI*2*8;const x=cx+R*Math.sin(ratio*tt+phase),y=cy+R*Math.sin(tt);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
     const g=ctx.createLinearGradient(cx-R,cy,cx+R,cy)
     g.addColorStop(0,`rgba(${colorX.join(',')},0.55)`)
     g.addColorStop(1,`rgba(${colorY.join(',')},0.55)`)
-    ctx.strokeStyle=g; ctx.lineWidth=1; ctx.stroke()
-    const px=cx+R*Math.sin(ratio*t+phase), py=cy+R*Math.sin(t)
-    ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2)
-    ctx.fillStyle=`rgb(${colorX.join(',')})`; ctx.fill()
-    t+=0.015; phase+=0.001
-    lisAnim=requestAnimationFrame(frame)
+    ctx.strokeStyle=g;ctx.lineWidth=1;ctx.stroke()
+    const px=cx+R*Math.sin(ratio*t+phase),py=cy+R*Math.sin(t)
+    ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fillStyle=`rgb(${colorX.join(',')})`;ctx.fill()
+    t+=0.015;phase+=0.001;lisAnim=requestAnimationFrame(frame)
   }
   frame()
 }
 
 // ── WEB AUDIO ──
-let audioCtx=null, audio=null
-let planetBuffers={}, planetSources={}, planetActive={}
-function initAudio(){ if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)() }
-async function loadPlanetBuf(url){
-  const r=await fetch(API_BASE+url), ab=await r.arrayBuffer()
-  return await audioCtx.decodeAudioData(ab)
-}
+let audioCtx=null,audio=null
+let planetBuffers={},planetSources={},planetActive={}
+function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)()}
+async function loadPlanetBuf(url){const r=await fetch(API_BASE+url),ab=await r.arrayBuffer();return await audioCtx.decodeAudioData(ab)}
 function togglePlanet(planet){
   const btn=document.querySelector(`[data-planet="${planet}"]`)
   if(planetActive[planet]){
     try{planetSources[planet].stop()}catch(e){}
-    delete planetSources[planet]; planetActive[planet]=false; btn.classList.remove('active')
+    delete planetSources[planet];planetActive[planet]=false;btn.classList.remove('active')
   } else {
-    if(!planetBuffers[planet]) return
-    const src=audioCtx.createBufferSource()
-    src.buffer=planetBuffers[planet]; src.loop=true
-    src.connect(audioCtx.destination); src.start()
-    planetSources[planet]=src; planetActive[planet]=true; btn.classList.add('active')
+    if(!planetBuffers[planet])return
+    const src=audioCtx.createBufferSource();src.buffer=planetBuffers[planet];src.loop=true
+    src.connect(audioCtx.destination);src.start()
+    planetSources[planet]=src;planetActive[planet]=true;btn.classList.add('active')
   }
 }
 
 // ── PLAYER ──
 function togglePlay(){
-  if(!audio) return
+  if(!audio)return
   if(audio.paused){audio.play();document.getElementById('btnPlay').textContent='⏸'}
   else{audio.pause();document.getElementById('btnPlay').textContent='▶'}
 }
-function seekAudio(e){
-  if(!audio||!audio.duration) return
-  audio.currentTime=(e.offsetX/e.currentTarget.offsetWidth)*audio.duration
-}
-function fmt(s){return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`}
+function seekAudio(e){if(!audio||!audio.duration)return;audio.currentTime=(e.offsetX/e.currentTarget.offsetWidth)*audio.duration}
+function fmt(s){return`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`}
 
 // ── GENERATE ──
 async function generate(){
@@ -441,7 +440,8 @@ async function generate(){
   const day=parseInt(document.getElementById('day').value)
   const city=document.getElementById('city').value.trim()
   const timeV=document.getElementById('time').value.trim()
-  if(!year||!month||!day||!city){alert('Please fill in year, month, day and city.');return}
+  const errMsg=currentLang==='ua'?'Будь ласка, заповніть рік, місяць, день та місто.':'Please fill in year, month, day and city.'
+  if(!year||!month||!day||!city){alert(errMsg);return}
   let hour=12,minute=0
   if(timeV){const p=timeV.split(':');hour=parseInt(p[0])||12;minute=parseInt(p[1])||0}
 
@@ -451,74 +451,84 @@ async function generate(){
   document.getElementById('btnGenerate').disabled=true
 
   try{
-    const body={year,month,day,hour,minute,city,duration:60}
-    const [r1,r2]=await Promise.all([
-      fetch(`${API_BASE}/generate`,        {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),
-      fetch(`${API_BASE}/generate/planets`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-    ])
-    if(!r1.ok){const e=await r1.json();throw new Error(e.detail||'Error')}
-    const data=await r1.json(), planets=await r2.json()
+    const body={year,month,day,hour,minute,city,duration:30}
 
+    // Step 1: main generation
+    const r1=await fetch(`${API_BASE}/generate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    if(!r1.ok){const e=await r1.json();throw new Error(e.detail||'Error')}
+    const data=await r1.json()
+
+    // Show result immediately
     document.getElementById('loading').classList.remove('active')
     document.getElementById('result').classList.add('active')
 
-    const sun=data.planets['Sun'], moon=data.planets['Moon']
-
-    // Save to history
+    const sun=data.planets['Sun'],moon=data.planets['Moon']
     addToHistory({year,month,day,hour,minute,city,birthdate:data.birthdate,sunSign:sun.sign,moonSign:moon.sign})
-
     document.getElementById('resultDate').textContent=`${data.birthdate}  ·  ${city.toUpperCase()}`
     document.getElementById('resultSigns').textContent=`☀ ${sun.sign}   ☽ ${moon.sign}`
     document.getElementById('natalImage').src=API_BASE+data.image_url
-
     drawLissajous(sun.freq,moon.freq,sun.color,moon.color)
 
     audio=new Audio(API_BASE+data.audio_url)
     audio.addEventListener('timeupdate',()=>{
-      if(!audio.duration) return
+      if(!audio.duration)return
       document.getElementById('progressFill').style.width=(audio.currentTime/audio.duration*100)+'%'
       document.getElementById('timeDisplay').textContent=`${fmt(audio.currentTime)} / ${fmt(audio.duration)}`
     })
     audio.addEventListener('ended',()=>document.getElementById('btnPlay').textContent='▶')
     document.getElementById('btnDownload').onclick=()=>{
-      const a=document.createElement('a')
-      a.href=API_BASE+data.audio_url
-      a.download=`spheres_${year}${String(month).padStart(2,'0')}${String(day).padStart(2,'0')}.wav`
-      a.click()
+      const a=document.createElement('a');a.href=API_BASE+data.audio_url
+      a.download=`spheres_${year}${String(month).padStart(2,'0')}${String(day).padStart(2,'0')}.wav`;a.click()
     }
 
+    // Build planet buttons (greyed out until loaded)
     initAudio()
-    const grid=document.getElementById('planetsGrid'); grid.innerHTML=''
+    const grid=document.getElementById('planetsGrid');grid.innerHTML=''
     for(const planet of PLANET_ORDER){
-      if(!data.planets[planet]) continue
-      const d=data.planets[planet], col=d.color
+      if(!data.planets[planet])continue
+      const d=data.planets[planet],col=d.color
       const btn=document.createElement('div')
-      btn.className='planet-btn'; btn.dataset.planet=planet
-      btn.style.borderColor=`rgba(${col.join(',')},0.3)`
+      btn.className='planet-btn';btn.dataset.planet=planet
+      btn.style.borderColor=`rgba(${col.join(',')},0.3)`;btn.style.opacity='0.35'
       btn.innerHTML=`<div class="planet-glow" style="background:radial-gradient(ellipse,rgba(${col.join(',')},0.12),transparent 70%)"></div><div class="planet-name" style="color:rgb(${col.join(',')})">${planet.toUpperCase()}</div><div class="planet-freq">${d.freq} Hz</div><div class="planet-sign">${d.sign}</div>`
-      btn.onclick=()=>togglePlanet(planet)
-      grid.appendChild(btn)
-      planetActive[planet]=false
-      if(planets.planet_urls?.[planet]){
-        loadPlanetBuf(planets.planet_urls[planet]).then(buf=>{planetBuffers[planet]=buf}).catch(console.error)
-      }
+      grid.appendChild(btn);planetActive[planet]=false
     }
 
-    const tbody=document.getElementById('planetTableBody'); tbody.innerHTML=''
+    // Step 2: planet tracks in background
+    fetch(`${API_BASE}/generate/planets`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(r=>r.json())
+      .then(planets=>{
+        document.getElementById('mixerLoading').style.display='none'
+        const g=document.getElementById('planetsGrid');g.style.display='grid'
+        for(const planet of PLANET_ORDER){
+          if(!planets.planet_urls?.[planet])continue
+          loadPlanetBuf(planets.planet_urls[planet]).then(buf=>{
+            planetBuffers[planet]=buf
+            const btn=document.querySelector(`[data-planet="${planet}"]`)
+            if(btn){btn.style.opacity='1';btn.classList.add('ready');btn.onclick=()=>togglePlanet(planet)}
+          }).catch(console.error)
+        }
+      })
+      .catch(()=>{
+        document.getElementById('mixerLoading').innerHTML=`<span style="font-size:10px;color:rgba(200,80,60,0.6);font-family:'Courier Prime',monospace;letter-spacing:2px;">${currentLang==='ua'?'МІКШЕР НЕДОСТУПНИЙ':'MIXER UNAVAILABLE'}</span>`
+      })
+
+    // Table
+    const tbody=document.getElementById('planetTableBody');tbody.innerHTML=''
     for(const planet of PLANET_ORDER){
-      if(!data.planets[planet]) continue
-      const d=data.planets[planet], col=d.color
+      if(!data.planets[planet])continue
+      const d=data.planets[planet],col=d.color
       const tr=document.createElement('tr')
       tr.innerHTML=`<td style="color:rgb(${col.join(',')})">● ${planet}</td><td>${d.sign}</td><td>${d.deg}°</td><td>${d.freq} Hz</td><td>${d.bpm} BPM</td><td>${Math.round(d.strength*100)}%</td>`
       tbody.appendChild(tr)
     }
 
-  } catch(e){
+  }catch(e){
     document.getElementById('loading').classList.remove('active')
     document.getElementById('formSection').style.display='block'
     document.getElementById('btnGenerate').disabled=false
     renderHistory()
-    alert('Error: '+e.message)
+    alert((currentLang==='ua'?'Помилка: ':'Error: ')+e.message)
   }
 }
 
@@ -526,11 +536,15 @@ function resetForm(){
   if(audio){audio.pause();audio=null}
   if(lisAnim){cancelAnimationFrame(lisAnim);lisAnim=null}
   Object.keys(planetSources).forEach(p=>{try{planetSources[p].stop()}catch(e){}})
-  planetSources={}; planetBuffers={}; planetActive={}
+  planetSources={};planetBuffers={};planetActive={}
   document.getElementById('result').classList.remove('active')
   document.getElementById('formSection').style.display='block'
   document.getElementById('btnGenerate').disabled=false
   document.getElementById('btnPlay').textContent='▶'
+  const ml=document.getElementById('mixerLoading')
+  ml.style.display='flex'
+  ml.innerHTML=`<div class="mixer-loading-orb"></div><div class="mixer-loading-text" data-ua="ЗАВАНТАЖЕННЯ ПЛАНЕТАРНИХ ТРЕКІВ..." data-en="LOADING PLANET TRACKS...">${currentLang==='ua'?'ЗАВАНТАЖЕННЯ ПЛАНЕТАРНИХ ТРЕКІВ...':'LOADING PLANET TRACKS...'}</div>`
+  const pg=document.getElementById('planetsGrid');pg.style.display='none';pg.innerHTML=''
   renderHistory()
 }
 
