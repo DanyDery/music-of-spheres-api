@@ -42,6 +42,12 @@ import struct, math, sys
 sys.path.insert(0, str(Path(__file__).parent))
 import music_of_spheres as m
 
+app = FastAPI(
+    title="Music of the Spheres API",
+    description="Pythagorean planetary matrix generator • Kusto 1978 • 432 Hz",
+    version="1.1.0",
+)
+
 from fastapi import Request
 from fastapi.responses import Response
 
@@ -61,12 +67,6 @@ async def add_cors_headers(request: Request, call_next):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
-
-app = FastAPI(
-    title="Music of the Spheres API",
-    description="Pythagorean planetary matrix generator • Kusto 1978 • 432 Hz",
-    version="1.1.0",
-)
 
 app.add_middleware(
     CORSMiddleware,
