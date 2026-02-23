@@ -102,7 +102,7 @@ def _gen_planet(planet: str, d: dict, duration: int, session_dir: Path) -> Path:
     q5   = amp * 0.35 * lfo * m.string_tone(freq * 1.500, t, phase)  # perfect fifth
     q4   = amp * 0.25 * lfo * m.string_tone(freq * 1.333, t, phase)  # perfect fourth
     oct_ = amp * 0.15 * lfo * m.string_tone(freq * 2.000, t, phase)  # octave
-    sig  = m.envelope(tone + q5 + q4 + oct_, attack=1.5, release=2.0)
+    sig  = tone + q5 + q4 + oct_
     sig  = m.reverb(sig, decay=0.3, delay_ms=80, num_echoes=4)
     peak = np.max(np.abs(sig))
     if peak > 0: sig = sig / peak * 0.85
