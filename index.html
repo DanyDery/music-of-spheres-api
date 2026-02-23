@@ -154,8 +154,8 @@ footer{text-align:center;padding:50px 0 70px;font-size:10px;color:rgba(155,168,1
 
 <!-- LANG SWITCHER -->
 <div class="lang-switcher">
-  <button class="lang-btn active" onclick="setLang('ua')">UA</button>
-  <button class="lang-btn" onclick="setLang('en')">EN</button>
+  <button class="lang-btn active" data-lang="ua">UA</button>
+  <button class="lang-btn" data-lang="en">EN</button>
 </div>
 
 <div class="container">
@@ -169,7 +169,7 @@ footer{text-align:center;padding:50px 0 70px;font-size:10px;color:rgba(155,168,1
 
   <!-- THEORY — open by default, above form -->
   <div class="theory-panel">
-    <button class="theory-toggle open" id="theoryToggle" onclick="toggleTheory()">
+    <button class="theory-toggle open" id="theoryToggle">
       <span data-ua="ПРО ТЕОРІЮ" data-en="ABOUT THE THEORY">ПРО ТЕОРІЮ</span>
       <span class="arrow">▾</span>
     </button>
@@ -231,7 +231,7 @@ footer{text-align:center;padding:50px 0 70px;font-size:10px;color:rgba(155,168,1
       <span class="warning-icon">◎</span>
       <span class="warning-text" id="warningText" data-ua="<strong>Генерація займає до 2 хвилин.</strong> Сервер розраховує точні планетарні позиції, синтезує 10 аудіотреків у строї 432 Гц та рендерить вашу натальну карту. Будь ласка, не закривайте вкладку." data-en="<strong>Generation takes up to 2 minutes.</strong> The server calculates your exact planetary positions, synthesizes 10 audio tracks in 432 Hz tuning, and renders your natal map. Please keep this tab open."><strong>Генерація займає до 2 хвилин.</strong> Сервер розраховує точні планетарні позиції, синтезує 10 аудіотреків у строї 432 Гц та рендерить вашу натальну карту. Будь ласка, не закривайте вкладку.</span>
     </div>
-    <button class="btn" id="btnGenerate" onclick="generate()" data-ua="ЗГЕНЕРУВАТИ МОЮ МАТРИЦЮ" data-en="GENERATE MY MATRIX">ЗГЕНЕРУВАТИ МОЮ МАТРИЦЮ</button>
+    <button class="btn" id="btnGenerate" data-ua="ЗГЕНЕРУВАТИ МОЮ МАТРИЦЮ" data-en="GENERATE MY MATRIX">ЗГЕНЕРУВАТИ МОЮ МАТРИЦЮ</button>
   </div>
 
   <!-- LOADING -->
@@ -264,9 +264,9 @@ footer{text-align:center;padding:50px 0 70px;font-size:10px;color:rgba(155,168,1
     <div class="card player-section">
       <span class="label" data-ua="ВАША МУЗИКА СФЕР" data-en="YOUR MUSIC OF THE SPHERES">ВАША МУЗИКА СФЕР</span>
       <div class="player-controls">
-        <button class="btn-play" id="btnPlay" onclick="togglePlay()">▶</button>
+        <button class="btn-play" id="btnPlay">▶</button>
         <div class="progress-wrap">
-          <div class="progress-bar" onclick="seekAudio(event)">
+          <div class="progress-bar">
             <div class="progress-fill" id="progressFill"></div>
           </div>
           <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
@@ -299,7 +299,7 @@ footer{text-align:center;padding:50px 0 70px;font-size:10px;color:rgba(155,168,1
     </div>
 
     <div style="text-align:center;margin:32px 0 20px">
-      <button class="btn" onclick="resetForm()" style="max-width:280px;margin:0 auto;display:block" data-ua="НОВА КАРТА" data-en="NEW CHART">НОВА КАРТА</button>
+      <button class="btn" style="max-width:280px;margin:0 auto;display:block" data-ua="НОВА КАРТА" data-en="NEW CHART">НОВА КАРТА</button>
     </div>
   </div>
 
@@ -307,7 +307,22 @@ footer{text-align:center;padding:50px 0 70px;font-size:10px;color:rgba(155,168,1
 </div>
 
 <script>
-const API_BASE = 'https://music-of-spheres-api-production.up.railway.app'
+const API_BASE = 'https://YOUR-RAILWAY-URL.railway.app'
+
+// ── LANGUAGE ──
+let currentLang = 'ua'
+
+function setLang(lang) {
+  currentLang = lang
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent===lang.toUpperCase()))
+  document.querySelectorAll('[data-ua]').forEach(el => {
+    const text = el.getAttribute('data-'+lang)
+    if (!text) return
+    if (el.tagName==='BUTTON') el.textContent = text
+    else el.innerHTML = text
+  })
+  renderHistory()
+}
 // ── INDEXEDDB CACHE ──
 const DB_NAME = 'spheres_db'
 const DB_VER  = 1
@@ -703,7 +718,24 @@ function resetForm(){
   renderHistory()
 }
 
+// ── THEORY TOGGLE ──
+function toggleTheory(){
+  document.getElementById('theoryToggle').classList.toggle('open')
+  document.getElementById('theoryBody').classList.toggle('open')
+}
+
 // Init
+document.querySelectorAll('[data-lang]').forEach(b =>
+  b.addEventListener('click', () => setLang(b.getAttribute('data-lang')))
+)
+document.getElementById('theoryToggle').addEventListener('click', toggleTheory)
+document.getElementById('btnGenerate').addEventListener('click', generate)
+document.getElementById('btnPlay').addEventListener('click', togglePlay)
+document.getElementById('progressBar').addEventListener('click', seekAudio)
+
+// Bind reset buttons (there may be multiple)
+document.querySelectorAll('[data-action="reset"]').forEach(b => b.addEventListener('click', resetForm))
+
 renderHistory() // async, fire and forget
 </script>
 </body>
