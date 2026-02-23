@@ -605,7 +605,7 @@ async function generate(){
   document.getElementById('btnGenerate').disabled=true
 
   try{
-    const body={year,month,day,hour,minute,city,duration:10}
+    const body={year,month,day,hour,minute,city,duration:30}
 
     // Step 1: main generation
     const r1=await fetch(`${API_BASE}/generate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
@@ -641,12 +641,13 @@ async function generate(){
 
 
 
-    // Step 2: planet files already generated — fetch individually (instant)
+    // Step 2: fetch planet tracks individually with retry on 202
     document.getElementById('mixerLoading').style.display='flex'
     document.getElementById('planetsGrid').style.display='none'
     initAudio()
-    const grid=document.getElementById('planetsGrid');grid.innerHTML=''
+    const grid=document.getElementById('planetsGrid'); grid.innerHTML=''
 
+    // Build planet buttons immediately (greyed out)
     for(const planet of PLANET_ORDER){
       if(!data.planets[planet]) continue
       const d=data.planets[planet], col=d.color
@@ -657,30 +658,53 @@ async function generate(){
       grid.appendChild(btn); planetActive[planet]=false
     }
 
-    // Fetch all planet WAVs in parallel — files exist on server, download is fast
-    let loadedCount = 0
-    const totalPlanets = PLANET_ORDER.filter(p=>data.planet_urls?.[p]).length
+    // Fetch each planet with retry on 202 (file still generating)
+    let loadedCount=0
+    const totalPlanets=PLANET_ORDER.filter(p=>data.planet_urls?.[p]).length
+
+    async function fetchPlanetWithRetry(planet, url, maxRetries=15){
+      for(let i=0; i<maxRetries; i++){
+        try{
+          const r = await fetch(API_BASE + url)
+          if(r.status === 202){
+            // Still generating — wait 2s and retry
+            await new Promise(res => setTimeout(res, 2000))
+            continue
+          }
+          if(!r.ok) throw new Error(`HTTP ${r.status}`)
+          const ab = await r.arrayBuffer()
+          const buf = await audioCtx.decodeAudioData(ab)
+          planetBuffers[planet] = buf
+          // Unlock button
+          const btn=document.querySelector(`[data-planet="${planet}"]`)
+          if(btn){
+            btn.style.opacity='1'; btn.classList.add('ready')
+            btn.onclick=()=>togglePlanet(planet)
+          }
+        } catch(e){
+          console.warn(`Planet ${planet} failed:`, e)
+        }
+        // Count loaded (success or fail)
+        loadedCount++
+        if(loadedCount >= totalPlanets){
+          document.getElementById('mixerLoading').style.display='none'
+          document.getElementById('planetsGrid').style.display='grid'
+        }
+        return
+      }
+      // Max retries exceeded
+      console.warn(`Planet ${planet} timed out after ${maxRetries} retries`)
+      loadedCount++
+      if(loadedCount >= totalPlanets){
+        document.getElementById('mixerLoading').style.display='none'
+        document.getElementById('planetsGrid').style.display='grid'
+      }
+    }
+
+    // Launch all planet fetches in parallel
     for(const planet of PLANET_ORDER){
       if(!data.planet_urls?.[planet]) continue
-      loadPlanetBuf(data.planet_urls[planet])
-        .then(buf=>{
-          planetBuffers[planet]=buf
-          const btn=document.querySelector(`[data-planet="${planet}"]`)
-          if(btn){btn.style.opacity='1';btn.classList.add('ready');btn.onclick=()=>togglePlanet(planet)}
-          loadedCount++
-          if(loadedCount>=totalPlanets){
-            document.getElementById('mixerLoading').style.display='none'
-            document.getElementById('planetsGrid').style.display='grid'
-          }
-        })
-        .catch(e=>{
-          loadedCount++
-          console.warn('Planet load failed:', planet, e)
-          if(loadedCount>=totalPlanets){
-            document.getElementById('mixerLoading').style.display='none'
-            document.getElementById('planetsGrid').style.display='grid'
-          }
-        })
+      fetchPlanetWithRetry(planet, data.planet_urls[planet])
     }
 
     // Table

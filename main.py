@@ -1,36 +1,34 @@
 """
-Music of the Spheres — FastAPI Backend v1.2
+Music of the Spheres — FastAPI Backend v1.3
 ═══════════════════════════════════════════
 Architecture:
-  POST /generate  — generates EVERYTHING in parallel:
-    - full mix WAV
-    - natal map PNG
-    - 10 individual planet WAVs
-  All three run simultaneously in ThreadPoolExecutor.
-  Frontend fetches planet files individually after — instant.
+  POST /generate
+    1. Builds natal chart
+    2. Starts audio + image generation (awaited — ~20s)
+    3. Starts planet WAV generation IN BACKGROUND (asyncio.create_task)
+    4. Returns response immediately with session_id + planet_urls
 
-  /generate/planets is now deprecated (kept for compatibility).
+  GET /planet-audio/{session_id}/{planet}
+    - If file ready   → returns WAV instantly
+    - If not ready yet → 202 Accepted (frontend retries after 2s)
 
-Endpoints:
-  POST /generate                   → all files at once
-  GET  /audio/{id}                 → full WAV mix
-  GET  /image/{id}                 → PNG natal map
-  GET  /planet-audio/{id}/{planet} → single planet WAV (pre-generated)
-  GET  /health                     → server status
+  This way Railway never hits the 30s timeout on planet tracks.
+  Each individual planet file request is < 1s once ready.
 """
 
-import ssl, certifi, os, uuid
+import ssl, certifi, os, uuid, asyncio
 os.environ['SSL_CERT_FILE']      = certifi.where()
 os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from pathlib import Path
 from datetime import date
 from concurrent.futures import ThreadPoolExecutor
-import asyncio
 import numpy as np
 import wave as wv
 import struct, math, sys
@@ -41,7 +39,7 @@ import music_of_spheres as m
 app = FastAPI(
     title="Music of the Spheres API",
     description="Pythagorean planetary matrix generator • Kusto 1978 • 432 Hz",
-    version="1.2.0",
+    version="1.3.0",
 )
 
 app.add_middleware(
@@ -50,9 +48,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-from fastapi import Request
-from fastapi.responses import Response
 
 @app.middleware("http")
 async def cors_middleware(request: Request, call_next):
@@ -71,8 +66,10 @@ async def cors_middleware(request: Request, call_next):
 OUTPUT_DIR = Path("/tmp/spheres")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# 4 workers: audio + image + up to 10 planets all at once
-executor = ThreadPoolExecutor(max_workers=12)
+# Thread pool for CPU-bound tasks
+executor = ThreadPoolExecutor(max_workers=4)
+
+PLANET_DURATION = 10  # seconds per planet track
 
 
 # ══════════════════════════════════════════════
@@ -90,7 +87,7 @@ class GenerateRequest(BaseModel):
 
 
 # ══════════════════════════════════════════════
-# WORKER FUNCTIONS (run in thread pool)
+# WORKER FUNCTIONS (CPU-bound, run in thread pool)
 # ══════════════════════════════════════════════
 
 def _gen_audio(chart, birthdate, duration, session_dir):
@@ -103,8 +100,11 @@ def _gen_image(chart, birthdate, session_dir):
     try:    return m.generate_image(chart, birthdate)
     finally: os.chdir(orig)
 
-def _gen_planet(planet, d, duration, session_dir):
-    """Generate solo WAV for one planet — runs in thread pool."""
+def _gen_planet(planet: str, d: dict, duration: int, session_dir: Path) -> Path:
+    """
+    Generate solo WAV for one planet.
+    Three Pythagorean intervals: fifth (3:2), fourth (4:3), octave (2:1).
+    """
     freq    = d["freq"]
     abs_deg = d["abs_deg"]
     beat_hz = d["beat_hz"]
@@ -114,9 +114,9 @@ def _gen_planet(planet, d, duration, session_dir):
     t    = np.linspace(0, duration, int(m.SAMPLE_RATE * duration), endpoint=False)
     lfo  = 0.65 + 0.35 * np.sin(2 * math.pi * beat_hz * t)
     tone = amp * lfo * m.string_tone(freq,        t, phase)
-    q5   = amp * 0.35 * lfo * m.string_tone(freq * 1.500, t, phase)
-    q4   = amp * 0.25 * lfo * m.string_tone(freq * 1.333, t, phase)
-    oct_ = amp * 0.15 * lfo * m.string_tone(freq * 2.000, t, phase)
+    q5   = amp * 0.35 * lfo * m.string_tone(freq * 1.500, t, phase)  # perfect fifth
+    q4   = amp * 0.25 * lfo * m.string_tone(freq * 1.333, t, phase)  # perfect fourth
+    oct_ = amp * 0.15 * lfo * m.string_tone(freq * 2.000, t, phase)  # octave
     sig  = m.envelope(tone + q5 + q4 + oct_, attack=1.5, release=2.0)
     sig  = m.reverb(sig, decay=0.3, delay_ms=80, num_echoes=4)
     peak = np.max(np.abs(sig))
@@ -134,27 +134,38 @@ def _gen_planet(planet, d, duration, session_dir):
     return fpath
 
 
+async def _gen_planets_background(chart: dict, session_dir: Path):
+    """
+    Generate all 10 planet WAVs in background after /generate returns.
+    Each planet runs in thread pool — all 10 in parallel.
+    """
+    loop = asyncio.get_event_loop()
+    futures = [
+        loop.run_in_executor(executor, _gen_planet, planet, chart[planet], PLANET_DURATION, session_dir)
+        for planet in m.PLANET_ORDER if planet in chart
+    ]
+    await asyncio.gather(*futures)
+    print(f"✅ All planet tracks ready in {session_dir.name}")
+
+
 # ══════════════════════════════════════════════
 # ENDPOINTS
 # ══════════════════════════════════════════════
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "Music of the Spheres API v1.2"}
+    return {"status": "ok", "service": "Music of the Spheres API v1.3"}
 
 
 @app.post("/generate")
 async def generate(req: GenerateRequest):
     """
-    Generates EVERYTHING in parallel:
-      - full mix WAV
-      - natal map PNG
-      - 10 individual planet WAVs
-
-    All run simultaneously → total time ≈ time of slowest single task.
-    Planet files are pre-generated so frontend can fetch them instantly.
+    Step 1 — builds chart, generates main WAV + PNG (awaited).
+    Step 2 — starts planet WAV generation IN BACKGROUND (not awaited).
+    Returns immediately after step 1 with planet_urls included.
+    Frontend fetches planet files individually — each GET is instant once ready.
     """
-    # Build chart
+    # Build natal chart
     try:
         birthdate = date(req.year, req.month, req.day)
     except ValueError as e:
@@ -173,16 +184,14 @@ async def generate(req: GenerateRequest):
 
     loop = asyncio.get_event_loop()
 
-    # Launch all tasks simultaneously
-    audio_fut  = loop.run_in_executor(executor, _gen_audio, chart, birthdate, req.duration, session_dir)
-    image_fut  = loop.run_in_executor(executor, _gen_image, chart, birthdate, session_dir)
-    planet_futs = [
-        loop.run_in_executor(executor, _gen_planet, planet, chart[planet], req.duration, session_dir)
-        for planet in m.PLANET_ORDER if planet in chart
-    ]
+    # Await main audio + image (parallel, ~20s total)
+    await asyncio.gather(
+        loop.run_in_executor(executor, _gen_audio, chart, birthdate, req.duration, session_dir),
+        loop.run_in_executor(executor, _gen_image, chart, birthdate, session_dir),
+    )
 
-    # Wait for everything
-    await asyncio.gather(audio_fut, image_fut, *planet_futs)
+    # Start planet generation in background — do NOT await
+    asyncio.create_task(_gen_planets_background(chart, session_dir))
 
     return {
         "session_id": session_id,
@@ -192,40 +201,31 @@ async def generate(req: GenerateRequest):
         "theory":     "Pythagorean • Kusto 1978",
         "audio_url":  f"/audio/{session_id}",
         "image_url":  f"/image/{session_id}",
-        # Planet URLs — files already exist, fetching is instant
         "planet_urls": {
             planet: f"/planet-audio/{session_id}/{planet.lower()}"
             for planet in m.PLANET_ORDER if planet in chart
         },
         "planets": {
             name: {
-                "freq":      d["freq"],
-                "base_freq": d["base_freq"],
-                "bpm":       round(d["bpm"], 4),
-                "strength":  round(d["strength"], 3),
-                "weight":    d["weight"],
-                "sign":      d["sign"],
-                "sign_short":d["sign_short"],
-                "deg":       round(d["deg"], 2),
-                "abs_deg":   round(d["abs_deg"], 2),
-                "color":     list(d["color"]),
+                "freq":       d["freq"],
+                "base_freq":  d["base_freq"],
+                "bpm":        round(d["bpm"], 4),
+                "strength":   round(d["strength"], 3),
+                "weight":     d["weight"],
+                "sign":       d["sign"],
+                "sign_short": d["sign_short"],
+                "deg":        round(d["deg"], 2),
+                "abs_deg":    round(d["abs_deg"], 2),
+                "color":      list(d["color"]),
             }
             for name, d in chart.items()
         }
     }
 
 
-@app.post("/generate/planets")
-async def generate_planets(req: GenerateRequest):
-    """
-    Deprecated — kept for compatibility.
-    Now /generate already includes planet_urls.
-    """
-    raise HTTPException(410, "Deprecated. Use POST /generate — it now includes planet_urls.")
-
-
 @app.get("/audio/{session_id}")
 def get_audio(session_id: str):
+    """Download full planetary WAV mix."""
     files = list((OUTPUT_DIR / session_id).glob("spheres_*.wav"))
     if not files: raise HTTPException(404, "Audio not found")
     return FileResponse(files[0], media_type="audio/wav", filename=files[0].name)
@@ -233,6 +233,7 @@ def get_audio(session_id: str):
 
 @app.get("/image/{session_id}")
 def get_image(session_id: str):
+    """Download PNG natal map."""
     files = list((OUTPUT_DIR / session_id).glob("spheres_*.png"))
     if not files: raise HTTPException(404, "Image not found")
     return FileResponse(files[0], media_type="image/png", filename=files[0].name)
@@ -240,6 +241,16 @@ def get_image(session_id: str):
 
 @app.get("/planet-audio/{session_id}/{planet_name}")
 def get_planet_audio(session_id: str, planet_name: str):
+    """
+    Download WAV for a single planet.
+    Returns 202 if file not ready yet — frontend should retry after 2s.
+    Returns 200 + WAV when ready.
+    """
     fpath = OUTPUT_DIR / session_id / f"planet_{planet_name}.wav"
-    if not fpath.exists(): raise HTTPException(404, f"Planet '{planet_name}' not found")
+    if not fpath.exists():
+        # File still being generated in background
+        return JSONResponse(
+            status_code=202,
+            content={"status": "generating", "retry_after": 2}
+        )
     return FileResponse(fpath, media_type="audio/wav")
