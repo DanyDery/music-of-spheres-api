@@ -58,9 +58,11 @@ async def cors_middleware(request: Request, call_next):
             "Access-Control-Allow-Headers": "Content-Type",
         })
     response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"]  = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    # Only add CORS headers for non-file responses to avoid Content-Length mismatch
+    if "content-length" not in response.headers:
+        response.headers["Access-Control-Allow-Origin"]  = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
 
 OUTPUT_DIR = Path("/tmp/spheres")
