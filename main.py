@@ -20,7 +20,7 @@ import ssl, certifi, os, uuid, asyncio
 os.environ['SSL_CERT_FILE']      = certifi.where()
 os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -52,7 +52,7 @@ OUTPUT_DIR = Path("/tmp/spheres")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Thread pool for CPU-bound tasks
-executor = ThreadPoolExecutor(max_workers=4)
+executor = ThreadPoolExecutor(max_workers=12)
 
 PLANET_DURATION = 10  # seconds per planet track
 
@@ -168,7 +168,7 @@ def health():
 
 
 @app.post("/generate")
-async def generate(req: GenerateRequest, background_tasks: BackgroundTasks):
+async def generate(req: GenerateRequest):
     """
     Step 1 — builds chart, generates main WAV + PNG (awaited).
     Step 2 — starts planet WAV generation IN BACKGROUND (not awaited).
@@ -194,14 +194,17 @@ async def generate(req: GenerateRequest, background_tasks: BackgroundTasks):
 
     loop = asyncio.get_event_loop()
 
-    # Await main audio + image (parallel, ~20s total)
+    # Generate everything in parallel:
+    # main audio + image + all 10 planet tracks simultaneously
+    planet_futs = [
+        loop.run_in_executor(executor, _gen_planet, planet, chart[planet], PLANET_DURATION, session_dir)
+        for planet in m.PLANET_ORDER if planet in chart
+    ]
     await asyncio.gather(
         loop.run_in_executor(executor, _gen_audio, chart, birthdate, req.duration, session_dir),
         loop.run_in_executor(executor, _gen_image, chart, birthdate, session_dir),
+        *planet_futs
     )
-
-    # Start planet generation in background via FastAPI BackgroundTasks
-    background_tasks.add_task(_gen_planets_background_sync, chart, session_dir)
 
     return {
         "session_id": session_id,
