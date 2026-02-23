@@ -675,11 +675,12 @@ async function generate(){
           }
           if(!r.ok) throw new Error(`HTTP ${r.status}`)
 
-          const ab  = await r.arrayBuffer()
+          const ab = await r.arrayBuffer()
 
           // Декодуємо тільки якщо audioCtx готовий
           if(!audioCtx) initAudio()
-          const buf = await audioCtx.decodeAudioData(ab)
+          const abCopy = ab.slice(0)
+          const buf = await audioCtx.decodeAudioData(abCopy)
           planetBuffers[planet] = buf
 
           // Активуємо кнопку
