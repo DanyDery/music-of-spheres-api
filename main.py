@@ -23,7 +23,6 @@ os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Request
 from pydantic import BaseModel, Field
 from pathlib import Path
 from datetime import date
@@ -48,21 +47,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.middleware("http")
-async def cors_middleware(request: Request, call_next):
-    if request.method == "OPTIONS":
-        return Response(status_code=200, headers={
-            "Access-Control-Allow-Origin":  "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type",
-        })
-    response = await call_next(request)
-    # Only add CORS headers for non-file responses to avoid Content-Length mismatch
-    if "content-length" not in response.headers:
-        response.headers["Access-Control-Allow-Origin"]  = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    return response
 
 OUTPUT_DIR = Path("/tmp/spheres")
 OUTPUT_DIR.mkdir(exist_ok=True)
