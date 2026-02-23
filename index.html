@@ -605,7 +605,7 @@ async function generate(){
   document.getElementById('btnGenerate').disabled=true
 
   try{
-    const body={year,month,day,hour,minute,city,duration:30}
+    const body={year,month,day,hour,minute,city,duration:10}
 
     // Step 1: main generation
     const r1=await fetch(`${API_BASE}/generate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
