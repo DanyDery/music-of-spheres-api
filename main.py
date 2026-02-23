@@ -21,7 +21,7 @@ os.environ['SSL_CERT_FILE']      = certifi.where()
 os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from pathlib import Path
@@ -229,7 +229,15 @@ def get_audio(session_id: str):
     """Download full planetary WAV mix."""
     files = list((OUTPUT_DIR / session_id).glob("spheres_*.wav"))
     if not files: raise HTTPException(404, "Audio not found")
-    return FileResponse(files[0], media_type="audio/wav", filename=files[0].name)
+    data = files[0].read_bytes()
+    return Response(
+        content=data,
+        media_type="audio/wav",
+        headers={
+            "Content-Length": str(len(data)),
+            "Content-Disposition": f"attachment; filename={files[0].name}"
+        }
+    )
 
 
 @app.get("/image/{session_id}")
@@ -237,7 +245,12 @@ def get_image(session_id: str):
     """Download PNG natal map."""
     files = list((OUTPUT_DIR / session_id).glob("spheres_*.png"))
     if not files: raise HTTPException(404, "Image not found")
-    return FileResponse(files[0], media_type="image/png", filename=files[0].name)
+    data = files[0].read_bytes()
+    return Response(
+        content=data,
+        media_type="image/png",
+        headers={"Content-Length": str(len(data))}
+    )
 
 
 @app.get("/planet-audio/{session_id}/{planet_name}")
@@ -249,9 +262,14 @@ def get_planet_audio(session_id: str, planet_name: str):
     """
     fpath = OUTPUT_DIR / session_id / f"planet_{planet_name}.wav"
     if not fpath.exists():
-        # File still being generated in background
         return JSONResponse(
             status_code=202,
             content={"status": "generating", "retry_after": 2}
         )
-    return FileResponse(fpath, media_type="audio/wav")
+    # Read into memory — avoids HTTP/2 streaming issues with Railway proxy
+    data = fpath.read_bytes()
+    return Response(
+        content=data,
+        media_type="audio/wav",
+        headers={"Content-Length": str(len(data))}
+    )
