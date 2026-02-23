@@ -307,80 +307,219 @@ footer{text-align:center;padding:50px 0 70px;font-size:10px;color:rgba(155,168,1
 </div>
 
 <script>
-const API_BASE = 'https://music-of-spheres-api-production.up.railway.app'
-const STORAGE_KEY = 'spheres_history'
-const PLANET_ORDER = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto']
+const API_BASE = 'https://YOUR-RAILWAY-URL.railway.app'
+// ── INDEXEDDB CACHE ──
+const DB_NAME = 'spheres_db'
+const DB_VER  = 1
+const META_STORE  = 'charts_meta'   // metadata: date, city, signs
+const FILES_STORE = 'charts_files'  // binary: wav, png as ArrayBuffer
+const MAX_CACHED  = 10
 
-// ── LANGUAGE ──
-let currentLang = 'ua'
+let db = null
 
-function setLang(lang) {
-  currentLang = lang
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent===lang.toUpperCase()))
-  document.querySelectorAll('[data-ua]').forEach(el => {
-    const text = el.getAttribute('data-'+lang)
-    if (!text) return
-    if (el.tagName==='INPUT' || el.tagName==='BUTTON') {
-      el.textContent = text
-    } else {
-      el.innerHTML = text
+function openDB(){
+  return new Promise((resolve, reject) => {
+    if (db) { resolve(db); return }
+    const req = indexedDB.open(DB_NAME, DB_VER)
+    req.onupgradeneeded = e => {
+      const d = e.target.result
+      if (!d.objectStoreNames.contains(META_STORE))
+        d.createObjectStore(META_STORE, {keyPath:'id'})
+      if (!d.objectStoreNames.contains(FILES_STORE))
+        d.createObjectStore(FILES_STORE, {keyPath:'id'})
     }
+    req.onsuccess = e => { db = e.target.result; resolve(db) }
+    req.onerror   = e => reject(e)
   })
-  // Re-render history labels
-  renderHistory()
 }
 
-// ── STARFIELD ──
-const sfC=document.getElementById('starfield'),sfX=sfC.getContext('2d')
-let stars=[]
-function initStars(){
-  sfC.width=window.innerWidth;sfC.height=window.innerHeight
-  stars=Array.from({length:180},()=>({x:Math.random()*sfC.width,y:Math.random()*sfC.height,r:Math.random()*1.2,o:Math.random()*0.5+0.1,s:Math.random()*0.3+0.05}))
+function dbPut(store, obj){
+  return openDB().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(store, 'readwrite')
+    tx.objectStore(store).put(obj).onsuccess = () => res()
+    tx.onerror = rej
+  }))
 }
-function drawStars(){
-  sfX.clearRect(0,0,sfC.width,sfC.height)
-  stars.forEach(s=>{sfX.beginPath();sfX.arc(s.x,s.y,s.r,0,Math.PI*2);sfX.fillStyle=`rgba(232,228,240,${s.o+Math.sin(Date.now()*s.s*0.001)*0.08})`;sfX.fill()})
-  requestAnimationFrame(drawStars)
-}
-window.addEventListener('resize',initStars);initStars();drawStars()
 
-// ── THEORY TOGGLE ──
-function toggleTheory(){
-  document.getElementById('theoryToggle').classList.toggle('open')
-  document.getElementById('theoryBody').classList.toggle('open')
+function dbGet(store, id){
+  return openDB().then(d => new Promise((res, rej) => {
+    const tx  = d.transaction(store, 'readonly')
+    const req = tx.objectStore(store).get(id)
+    req.onsuccess = () => res(req.result)
+    req.onerror   = rej
+  }))
+}
+
+function dbGetAll(store){
+  return openDB().then(d => new Promise((res, rej) => {
+    const tx  = d.transaction(store, 'readonly')
+    const req = tx.objectStore(store).getAll()
+    req.onsuccess = () => res(req.result)
+    req.onerror   = rej
+  }))
+}
+
+function dbDelete(store, id){
+  return openDB().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(store, 'readwrite')
+    tx.objectStore(store).delete(id).onsuccess = () => res()
+    tx.onerror = rej
+  }))
+}
+
+function makeId(year, month, day, city){
+  return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}-${city.toLowerCase().trim()}`
+}
+
+async function saveToCache(meta, audioUrl, imageUrl){
+  try {
+    // Fetch both files as ArrayBuffer
+    const [audioResp, imageResp] = await Promise.all([
+      fetch(API_BASE + audioUrl),
+      fetch(API_BASE + imageUrl)
+    ])
+    const [audioBuf, imageBuf] = await Promise.all([
+      audioResp.arrayBuffer(),
+      imageResp.arrayBuffer()
+    ])
+
+    const id = makeId(meta.year, meta.month, meta.day, meta.city)
+
+    await dbPut(META_STORE, { ...meta, id, cachedAt: Date.now() })
+    await dbPut(FILES_STORE, { id, audioBuf, imageBuf })
+
+    // Trim to MAX_CACHED — delete oldest
+    const all = await dbGetAll(META_STORE)
+    all.sort((a,b) => b.cachedAt - a.cachedAt)
+    for (const old of all.slice(MAX_CACHED)) {
+      await dbDelete(META_STORE,  old.id)
+      await dbDelete(FILES_STORE, old.id)
+    }
+    console.log('✅ Cached to IndexedDB:', id)
+  } catch(e) {
+    console.warn('Cache save failed:', e)
+  }
+}
+
+async function loadFromCache(id){
+  try {
+    const [meta, files] = await Promise.all([
+      dbGet(META_STORE,  id),
+      dbGet(FILES_STORE, id)
+    ])
+    if (!meta || !files) return null
+    return { meta, files }
+  } catch(e) {
+    return null
+  }
+}
+
+function bufToUrl(buf, mime){
+  return URL.createObjectURL(new Blob([buf], {type: mime}))
 }
 
 // ── HISTORY ──
-function loadHistory(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch(e){return[]}}
-function saveHistory(h){localStorage.setItem(STORAGE_KEY,JSON.stringify(h.slice(0,10)))}
-function addToHistory(entry){
-  const h=loadHistory()
-  const key=`${entry.year}-${entry.month}-${entry.day}-${entry.city}`
-  const filtered=h.filter(e=>`${e.year}-${e.month}-${e.day}-${e.city}`!==key)
-  filtered.unshift(entry);saveHistory(filtered);renderHistory()
-}
-function renderHistory(){
-  const h=loadHistory()
-  const section=document.getElementById('historySection')
-  const grid=document.getElementById('historyGrid')
-  if(h.length===0){section.style.display='none';return}
-  section.style.display='block'
-  const lbl=document.getElementById('labelHistory')
-  if(lbl) lbl.textContent=currentLang==='ua'?'РАНІШЕ ЗГЕНЕРОВАНІ КАРТИ':'PREVIOUSLY GENERATED CHARTS'
-  grid.innerHTML=''
-  h.forEach(e=>{
-    const card=document.createElement('div');card.className='history-card'
-    card.innerHTML=`<div class="history-date">${e.birthdate}</div><div class="history-city">${e.city.toUpperCase()}</div><div class="history-signs">☀ ${e.sunSign}  ☽ ${e.moonSign}</div>`
-    card.onclick=()=>{
-      document.getElementById('year').value=e.year
-      document.getElementById('month').value=e.month
-      document.getElementById('day').value=e.day
-      document.getElementById('city').value=e.city
-      if(e.hour!==12||e.minute!==0) document.getElementById('time').value=`${e.hour}:${String(e.minute).padStart(2,'0')}`
-      document.getElementById('formSection').scrollIntoView({behavior:'smooth'})
-    }
+const PLANET_ORDER = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto']
+
+async function renderHistory(){
+  const section = document.getElementById('historySection')
+  const grid    = document.getElementById('historyGrid')
+  const lbl     = document.getElementById('labelHistory')
+
+  let all = []
+  try { all = await dbGetAll(META_STORE) } catch(e) {}
+  all.sort((a,b) => b.cachedAt - a.cachedAt)
+
+  if (all.length === 0) { section.style.display='none'; return }
+  section.style.display = 'block'
+  if (lbl) lbl.textContent = currentLang==='ua' ? 'МОЇ ЗБЕРЕЖЕНІ КАРТИ' : 'MY SAVED CHARTS'
+
+  grid.innerHTML = ''
+  for (const e of all) {
+    const card = document.createElement('div')
+    card.className = 'history-card'
+    const cached = currentLang==='ua' ? '⚡ збережено' : '⚡ cached'
+    card.innerHTML = `
+      <div class="history-date">${e.birthdate}</div>
+      <div class="history-city">${e.city.toUpperCase()}</div>
+      <div class="history-signs">☀ ${e.sunSign}  ☽ ${e.moonSign}</div>
+      <div style="font-size:9px;color:var(--gold-dim);font-family:'Courier Prime',monospace;margin-top:6px;letter-spacing:1px">${cached}</div>`
+    card.onclick = () => restoreFromCache(e.id)
     grid.appendChild(card)
+  }
+}
+
+async function restoreFromCache(id){
+  const cached = await loadFromCache(id)
+  if (!cached) {
+    // файлы не найдены — просто заполним форму
+    const m = await dbGet(META_STORE, id)
+    if (m) prefillForm(m)
+    return
+  }
+  const { meta, files } = cached
+
+  // Restore audio and image from cached buffers
+  const audioUrl = bufToUrl(files.audioBuf, 'audio/wav')
+  const imageUrl = bufToUrl(files.imageBuf, 'image/png')
+
+  prefillForm(meta)
+
+  // Show result directly without API call
+  document.getElementById('formSection').style.display='none'
+  document.getElementById('historySection').style.display='none'
+  document.getElementById('result').classList.add('active')
+
+  document.getElementById('resultDate').textContent  = `${meta.birthdate}  ·  ${meta.city.toUpperCase()}`
+  document.getElementById('resultSigns').textContent = `☀ ${meta.sunSign}   ☽ ${meta.moonSign}`
+  document.getElementById('natalImage').src = imageUrl
+
+  if (meta.planets) {
+    const sun  = meta.planets['Sun']
+    const moon = meta.planets['Moon']
+    if (sun && moon) drawLissajous(sun.freq, moon.freq, sun.color, moon.color)
+  }
+
+  audio = new Audio(audioUrl)
+  audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return
+    document.getElementById('progressFill').style.width = (audio.currentTime/audio.duration*100)+'%'
+    document.getElementById('timeDisplay').textContent  = `${fmt(audio.currentTime)} / ${fmt(audio.duration)}`
   })
+  audio.addEventListener('ended', () => document.getElementById('btnPlay').textContent='▶')
+  document.getElementById('btnDownload').onclick = () => {
+    const a = document.createElement('a')
+    a.href = audioUrl
+    a.download = `spheres_${id}.wav`
+    a.click()
+  }
+
+  // Planet table from cached metadata
+  if (meta.planets) {
+    const tbody = document.getElementById('planetTableBody'); tbody.innerHTML=''
+    for (const planet of PLANET_ORDER) {
+      if (!meta.planets[planet]) continue
+      const d=meta.planets[planet], col=d.color
+      const tr=document.createElement('tr')
+      tr.innerHTML=`<td style="color:rgb(${col.join(',')})">● ${planet}</td><td>${d.sign}</td><td>${d.deg}°</td><td>${d.freq} Hz</td><td>${d.bpm} BPM</td><td>${Math.round(d.strength*100)}%</td>`
+      tbody.appendChild(tr)
+    }
+  }
+
+  // Mixer — show loading (planet tracks not cached, too large)
+  document.getElementById('mixerLoading').style.display='flex'
+  document.getElementById('planetsGrid').style.display='none'
+  const ml = document.getElementById('mixerLoading')
+  ml.innerHTML = `<div class="mixer-loading-orb"></div><div class="mixer-loading-text">${currentLang==='ua'?'ЗАВАНТАЖЕННЯ ТРЕКІВ...':'LOADING TRACKS...'}</div>`
+}
+
+function prefillForm(m){
+  document.getElementById('year').value  = m.year
+  document.getElementById('month').value = m.month
+  document.getElementById('day').value   = m.day
+  document.getElementById('city').value  = m.city
+  if (m.hour !== 12 || m.minute !== 0)
+    document.getElementById('time').value = `${m.hour}:${String(m.minute).padStart(2,'0')}`
 }
 
 // ── LISSAJOUS ──
@@ -451,7 +590,7 @@ async function generate(){
   document.getElementById('btnGenerate').disabled=true
 
   try{
-    const body={year,month,day,hour,minute,city,duration:10}
+    const body={year,month,day,hour,minute,city,duration:30}
 
     // Step 1: main generation
     const r1=await fetch(`${API_BASE}/generate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
@@ -463,7 +602,11 @@ async function generate(){
     document.getElementById('result').classList.add('active')
 
     const sun=data.planets['Sun'],moon=data.planets['Moon']
-    addToHistory({year,month,day,hour,minute,city,birthdate:data.birthdate,sunSign:sun.sign,moonSign:moon.sign})
+    // Save to IndexedDB cache (metadata + files)
+    const metaEntry = {year,month,day,hour,minute,city,birthdate:data.birthdate,sunSign:sun.sign,moonSign:moon.sign,planets:data.planets}
+    saveToCache(metaEntry, data.audio_url, data.image_url)
+      .then(()=>renderHistory())
+      .catch(console.warn)
     document.getElementById('resultDate').textContent=`${data.birthdate}  ·  ${city.toUpperCase()}`
     document.getElementById('resultSigns').textContent=`☀ ${sun.sign}   ☽ ${moon.sign}`
     document.getElementById('natalImage').src=API_BASE+data.image_url
@@ -481,37 +624,49 @@ async function generate(){
       a.download=`spheres_${year}${String(month).padStart(2,'0')}${String(day).padStart(2,'0')}.wav`;a.click()
     }
 
-    // Build planet buttons (greyed out until loaded)
+
+
+    // Step 2: planet files already generated — fetch individually (instant)
+    document.getElementById('mixerLoading').style.display='flex'
+    document.getElementById('planetsGrid').style.display='none'
     initAudio()
     const grid=document.getElementById('planetsGrid');grid.innerHTML=''
+
     for(const planet of PLANET_ORDER){
-      if(!data.planets[planet])continue
-      const d=data.planets[planet],col=d.color
+      if(!data.planets[planet]) continue
+      const d=data.planets[planet], col=d.color
       const btn=document.createElement('div')
-      btn.className='planet-btn';btn.dataset.planet=planet
-      btn.style.borderColor=`rgba(${col.join(',')},0.3)`;btn.style.opacity='0.35'
+      btn.className='planet-btn'; btn.dataset.planet=planet
+      btn.style.borderColor=`rgba(${col.join(',')},0.3)`; btn.style.opacity='0.35'
       btn.innerHTML=`<div class="planet-glow" style="background:radial-gradient(ellipse,rgba(${col.join(',')},0.12),transparent 70%)"></div><div class="planet-name" style="color:rgb(${col.join(',')})">${planet.toUpperCase()}</div><div class="planet-freq">${d.freq} Hz</div><div class="planet-sign">${d.sign}</div>`
-      grid.appendChild(btn);planetActive[planet]=false
+      grid.appendChild(btn); planetActive[planet]=false
     }
 
-    // Step 2: planet tracks in background
-    fetch(`${API_BASE}/generate/planets`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-      .then(r=>r.json())
-      .then(planets=>{
-        document.getElementById('mixerLoading').style.display='none'
-        const g=document.getElementById('planetsGrid');g.style.display='grid'
-        for(const planet of PLANET_ORDER){
-          if(!planets.planet_urls?.[planet])continue
-          loadPlanetBuf(planets.planet_urls[planet]).then(buf=>{
-            planetBuffers[planet]=buf
-            const btn=document.querySelector(`[data-planet="${planet}"]`)
-            if(btn){btn.style.opacity='1';btn.classList.add('ready');btn.onclick=()=>togglePlanet(planet)}
-          }).catch(console.error)
-        }
-      })
-      .catch(()=>{
-        document.getElementById('mixerLoading').innerHTML=`<span style="font-size:10px;color:rgba(200,80,60,0.6);font-family:'Courier Prime',monospace;letter-spacing:2px;">${currentLang==='ua'?'МІКШЕР НЕДОСТУПНИЙ':'MIXER UNAVAILABLE'}</span>`
-      })
+    // Fetch all planet WAVs in parallel — files exist on server, download is fast
+    let loadedCount = 0
+    const totalPlanets = PLANET_ORDER.filter(p=>data.planet_urls?.[p]).length
+    for(const planet of PLANET_ORDER){
+      if(!data.planet_urls?.[planet]) continue
+      loadPlanetBuf(data.planet_urls[planet])
+        .then(buf=>{
+          planetBuffers[planet]=buf
+          const btn=document.querySelector(`[data-planet="${planet}"]`)
+          if(btn){btn.style.opacity='1';btn.classList.add('ready');btn.onclick=()=>togglePlanet(planet)}
+          loadedCount++
+          if(loadedCount>=totalPlanets){
+            document.getElementById('mixerLoading').style.display='none'
+            document.getElementById('planetsGrid').style.display='grid'
+          }
+        })
+        .catch(e=>{
+          loadedCount++
+          console.warn('Planet load failed:', planet, e)
+          if(loadedCount>=totalPlanets){
+            document.getElementById('mixerLoading').style.display='none'
+            document.getElementById('planetsGrid').style.display='grid'
+          }
+        })
+    }
 
     // Table
     const tbody=document.getElementById('planetTableBody');tbody.innerHTML=''
@@ -549,7 +704,7 @@ function resetForm(){
 }
 
 // Init
-renderHistory()
+renderHistory() // async, fire and forget
 </script>
 </body>
 </html>
